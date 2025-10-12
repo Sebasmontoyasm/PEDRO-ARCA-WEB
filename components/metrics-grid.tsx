@@ -67,39 +67,37 @@ export default function Page() {
         const exactitud =
           general.PROCESADO + general.INCOMPLETO > 0
             ? (
-              (general.PROCESADO /
-                (general.PROCESADO + general.INCOMPLETO)) *
-              100
-            ).toFixed(2)
+                (general.PROCESADO /
+                  (general.PROCESADO + general.INCOMPLETO)) *
+                100
+              ).toFixed(2)
             : "0.00"
-         
-      
 
-        const docs: Metric_Doc[] = dataMetrics.docs
+        const docs: Metric_Doc = dataMetrics.docs[0]
         const docsGeneralesCalc = [
           {
             title: "Documentos Validados",
-            value: docs.reduce(
-              (sum, doc) => sum + Number(doc.PROCESADO ?? 0),
-              0
-            ),
+            value: docs.PROCESADO,
             color: "text-white",
             trendColor: "text-green-400",
             icon: FileText,
-            // description:  "+15.3% vs día anterior",
           },
           {
             title: "Documentos Rechazados",
-            value: docs.reduce(
-              (sum, doc) => sum + Number(doc.PARCIALES ?? 0),
-              0
-            ),
+            value: docs.PARCIALES,
             color: "text-red-400",
             trendColor: "text-red-400",
             icon: FileWarning,
-            // description:  "-12.8% vs día anterior",
+          },
+          {
+            title: "Tasa de cumplimiento de documentos",
+            value: `${docs.TASA_CUMPLIMIENTO}%`,
+            color: "text-green-400",
+            trendColor: "text-green-400",
+            icon: TrendingUp,
           },
         ]
+
         setDocsGenerales(docsGeneralesCalc)
 
         setPieData([
@@ -117,8 +115,7 @@ export default function Page() {
           },
           {
             name: "Pendientes",
-            value:
-              penReal ?? 0,
+            value: penReal ?? 0,
             color: "#3b82f6",
           },
         ])
@@ -160,44 +157,34 @@ export default function Page() {
           {
             title: "Ingresos Pendientes",
             value: general.PENDIENTE ?? 0,
-           // change:"+100%",
             trend: "up",
             icon: Users,
-            // description:  "Identificaciones correctas",
           },
           {
-            //Cambiar esta por suma de procesados a incompletos
             title: "Ingresos Procesados",
             value: pProcesado ?? 0,
-           // change:"+0%",
             trend: "up",
             icon: SearchCheck,
-            // description:  "Identificaciones correctas",
           },
           {
             title: "Ingresos sin documentos obligatorios",
             value: general.INCOMPLETO ?? 0,
-           // change:"",
             trend: "down",
             icon: CircleX,
-            // description:  "Sin documentos obligatorios",
           },
           {
-            title: "Ingresos con documentacion completa",
-            value: generalArray.find((g) => g.NOMBRE === "Procesado")?.TOTAL ?? 0,
-           // change:"0%",
+            title: "Ingresos con documentación completa",
+            value:
+              generalArray.find((g) => g.NOMBRE === "Procesado")?.TOTAL ?? 0,
             trend: "up",
             icon: Bot,
-            // description:  "Promedio de exactitud %",
           },
-           {
+          {
             title: "Tasa de cumplimiento de ingresos",
             value: `${exactitud}%`,
-           // change:"0%",
             trend: "up",
             icon: Bot,
-            // description:  "Promedio de exactitud %",
-          }
+          },
         ]
 
         setMetric(mapped)
@@ -229,33 +216,27 @@ export default function Page() {
                   {metric.title}
                 </CardTitle>
                 <Icon
-                  className={`h-4 w-4 ${metric.color ??
+                  className={`h-4 w-4 ${
+                    metric.color ??
                     (isPositive ? "text-green-400" : "text-red-400")
-                    }`}
+                  }`}
                 />
               </CardHeader>
               <CardContent>
                 <div
-                  className={`text-2xl font-bold ${metric.color ?? "text-white"
-                    }`}
+                  className={`text-2xl font-bold ${
+                    metric.color ?? "text-white"
+                  }`}
                 >
                   {metric.value}
                 </div>
-                <p
-                  className={`text-xs ${isPositive ? "text-green-400" : "text-red-400"
-                    }`}
-                >
-                  {metric.change} – {metric.description}
-                </p>
-                {(metric.title === "Exactitud" ||
-                  metric.title === "Confianza Promedio") && 
-                    <div className="mt-2">
-                      <Progress
-                        value={parseFloat(String(metric.value))}
-                        className="w-full bg-slate-700"
-                      />
-                    </div>
-                  }
+                  <div className="mt-2">
+                    <Progress
+                      value={parseFloat(String(metric.value))}
+                      className="w-full bg-slate-700"
+                    />
+                  </div>
+                
               </CardContent>
             </Card>
           )
@@ -275,23 +256,10 @@ export default function Page() {
                 <div className={`text-2xl font-bold ${doc.color}`}>
                   {doc.value}
                 </div>
-                <p className={`text-xs ${doc.trendColor}`}>{doc.description}</p>
               </CardContent>
             </Card>
           )
         })}
-        <Card className="bg-slate-800 border-slate-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white">
-              Tasa de cumplimiento de documentos
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-400"></div>
-            <p className="text-xs text-green-400">docvalidos/docrechazados+docvalidos</p>
-          </CardContent>
-        </Card>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -344,9 +312,7 @@ export default function Page() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                 <XAxis dataKey="name" stroke="#cbd5e1" />
                 <YAxis stroke="#cbd5e1" />
-                <Tooltip
-                  formatter={(value: number) => [`${value}`, "Ingresos"]}
-                />
+                <Tooltip formatter={(value: number) => [`${value}`, "Ingresos"]} />
                 <Legend />
                 <Bar dataKey="ingresos" fill="#6366f1" />
               </BarChart>

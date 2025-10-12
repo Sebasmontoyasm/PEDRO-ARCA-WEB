@@ -9,10 +9,9 @@ export interface Metric {
 }
 
 export interface Metric_Doc {
-  AINID: number
   PROCESADO: number
   PARCIALES: number
-  EXACTITUD: number
+  TASA_CUMPLIMIENTO: number
 }
 
 export interface Metric_General {
