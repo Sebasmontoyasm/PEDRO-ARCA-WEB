@@ -7,37 +7,27 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { CalendarIcon, FilterIcon, SearchIcon, FileTextIcon, DownloadIcon } from "lucide-react"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
+import { DateRange } from "react-day-picker"
 
 import MetricsGrid from "@/components/metrics-grid"
 import CensoTable from "@/components/censo-table"
 
-import {
-  CalendarIcon,
-  FilterIcon,
-  SearchIcon,
-  FileTextIcon,
-  DownloadIcon,
-} from "lucide-react"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
-
-// === Página principal ===
 export default function DashboardPage() {
   const [dark] = useState(true)
 
   useEffect(() => {
-    if (dark) {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
-    }
+    if (dark) document.documentElement.classList.add("dark")
+    else document.documentElement.classList.remove("dark")
   }, [dark])
 
-  // Filtros
+  // === Filtros ===
   const [filtroIngreso, setFiltroIngreso] = useState("")
   const [filtroEstado, setFiltroEstado] = useState("todos")
-  const [filtroFecha, setFiltroFecha] = useState<Date>()
   const [busqueda, setBusqueda] = useState("")
+  const [filtroRango, setFiltroRango] = useState<DateRange | undefined>()
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
@@ -62,8 +52,10 @@ export default function DashboardPage() {
             Exportar Reporte
           </Button>
         </div>
+
         <MetricsGrid />
 
+        {/* Filtros */}
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
           <h2 className="flex items-center gap-2 text-white text-lg font-semibold">
             <FilterIcon className="h-5 w-5 text-yellow-500" /> Filtros de Búsqueda
@@ -71,19 +63,23 @@ export default function DashboardPage() {
           <p className="text-slate-400 mb-4">
             Filtra los resultados por ingreso, estado, fecha o búsqueda general
           </p>
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Búsqueda General */}
             <div>
               <label className="text-sm font-medium text-white">Búsqueda General</label>
               <div className="relative mt-1">
                 <SearchIcon className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 <Input
-                  placeholder="Buscar por nombre o documento del ingreso"
+                  placeholder="Buscar por n° ingreso, documento o paciente"
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
                   className="pl-10 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
                 />
               </div>
             </div>
+
+            {/* ID de Ingreso */}
             <div>
               <label className="text-sm font-medium text-white">ID de Ingreso</label>
               <Input
@@ -93,11 +89,13 @@ export default function DashboardPage() {
                 className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 mt-1"
               />
             </div>
+
+            {/* Estado */}
             <div>
               <label className="text-sm font-medium text-white">Estado del ingreso</label>
               <Select value={filtroEstado} onValueChange={setFiltroEstado}>
                 <SelectTrigger className="bg-slate-700 border-slate-600 text-white mt-1">
-                  <SelectValue />
+                  <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-700 border-slate-600">
                   <SelectItem value="todos" className="text-white hover:bg-slate-600">
@@ -112,8 +110,10 @@ export default function DashboardPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Rango de ingreso */}
             <div>
-              <label className="text-sm font-medium text-white">Fecha de ingreso</label>
+              <label className="text-sm font-medium text-white">Rango de ingreso</label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -121,20 +121,43 @@ export default function DashboardPage() {
                     className="w-full justify-start text-left font-normal bg-slate-700 border-slate-600 text-white hover:bg-slate-600 mt-1"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filtroFecha ? format(filtroFecha, "PPP", { locale: es }) : "Seleccionar fecha"}
+                    {filtroRango?.from ? (
+                      filtroRango.to ? (
+                        <>
+                          {format(filtroRango.from, "PPP", { locale: es })} -{" "}
+                          {format(filtroRango.to, "PPP", { locale: es })}
+                        </>
+                      ) : (
+                        format(filtroRango.from, "PPP", { locale: es })
+                      )
+                    ) : (
+                      "Seleccionar rango"
+                    )}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-slate-700 border-slate-600" align="start">
-                  <Calendar mode="single" selected={filtroFecha} onSelect={setFiltroFecha} initialFocus />
+
+                <PopoverContent
+                  className="w-auto p-0 bg-slate-700 border-slate-600"
+                  align="start"
+                >
+                  <Calendar
+                    mode="range"
+                    selected={filtroRango}
+                    onSelect={setFiltroRango}
+                    numberOfMonths={2}
+                    initialFocus
+                  />
                 </PopoverContent>
               </Popover>
             </div>
           </div>
         </div>
+
+        {/* Tabla */}
         <CensoTable
           filtroIngreso={filtroIngreso}
           filtroEstado={filtroEstado}
-          filtroFecha={filtroFecha}
+          filtroRango={filtroRango}
           busqueda={busqueda}
         />
       </main>
