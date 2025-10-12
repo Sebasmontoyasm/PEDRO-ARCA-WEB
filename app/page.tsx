@@ -15,19 +15,73 @@ import { DateRange } from "react-day-picker"
 import MetricsGrid from "@/components/metrics-grid"
 import CensoTable from "@/components/censo-table"
 
+interface Ingreso {
+  AINCONSEC: string
+  AINFECING: string
+  PACNUMDOC: string
+  GPANOMCOM: string
+  ESTADO: string
+  documentos: { label: string; value: number }[]
+  FECHAINSERT: string
+  OBSERVACION: string
+  exactitud: number
+  TIMEPROCESS: string
+}
+
 export default function DashboardPage() {
   const [dark] = useState(true)
+
+  const [data, setData] = useState<Ingreso[]>([])
+
+  // === Filtros ===
+  const [filtroEstado, setFiltroEstado] = useState("todos")
+  const [busqueda, setBusqueda] = useState("")
+  const [filtroRangoIngreso, setFiltroRangoIngreso] = useState<DateRange | undefined>()
+  const [filtroRangoProcesado, setFiltroRangoProcesado] = useState<DateRange | undefined>()
+
+  // Estados únicos para el select dinámico
+  const [estadosUnicos, setEstadosUnicos] = useState<string[]>([])
 
   useEffect(() => {
     if (dark) document.documentElement.classList.add("dark")
     else document.documentElement.classList.remove("dark")
   }, [dark])
 
-  // === Filtros ===
-  const [filtroIngreso, setFiltroIngreso] = useState("")
-  const [filtroEstado, setFiltroEstado] = useState("todos")
-  const [busqueda, setBusqueda] = useState("")
-  const [filtroRango, setFiltroRango] = useState<DateRange | undefined>()
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/dashboard/censo")
+        const json = await res.json()
+
+        const mapped: Ingreso[] = json[0].map((item: any) => ({
+          AINCONSEC: String(item.AINCONSEC),
+          GPANOMCOM: item.GPANOMCOM,
+          AINFECING: item.AINFECING ? item.AINFECING : "-",
+          PACNUMDOC: item.PACNUMDOC,
+          OBSERVACION: item.OBSERVACION || "-",
+          ESTADO: item.ESTADO,
+          documentos: [
+            { label: "Validados", value: Number(item.PROCESADO) || 0 },
+            { label: "Inválidos", value: Number(item.PARCIALES) || 0 },
+            { label: "Totales", value: Number(item.TOTAL) || 0 },
+          ],
+          exactitud: Number(item.EXACTITUD) || 0,
+          FECHAINSERT: item.FECHAINSERT ? item.FECHAINSERT : "-",
+          TIMEPROCESS: item.TIMEPROCESS || "-",
+        }))
+
+        setData(mapped)
+
+        // Extraer estados únicos para el select
+        const estados = Array.from(new Set(mapped.map(i => i.ESTADO)))
+        setEstadosUnicos(estados)
+      } catch (err) {
+        console.error("Error cargando censo:", err)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
@@ -60,9 +114,7 @@ export default function DashboardPage() {
           <h2 className="flex items-center gap-2 text-white text-lg font-semibold">
             <FilterIcon className="h-5 w-5 text-yellow-500" /> Filtros de Búsqueda
           </h2>
-          <p className="text-slate-400 mb-4">
-            Filtra los resultados por ingreso, estado, fecha o búsqueda general
-          </p>
+          <p className="text-slate-400 mb-4">Filtra los resultados por estado, fecha de ingreso, fecha procesado o búsqueda general</p>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Búsqueda General */}
@@ -79,17 +131,6 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* ID de Ingreso */}
-            <div>
-              <label className="text-sm font-medium text-white">ID de Ingreso</label>
-              <Input
-                placeholder="Número de ingreso"
-                value={filtroIngreso}
-                onChange={(e) => setFiltroIngreso(e.target.value)}
-                className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 mt-1"
-              />
-            </div>
-
             {/* Estado */}
             <div>
               <label className="text-sm font-medium text-white">Estado del ingreso</label>
@@ -101,12 +142,11 @@ export default function DashboardPage() {
                   <SelectItem value="todos" className="text-white hover:bg-slate-600">
                     Todos
                   </SelectItem>
-                  <SelectItem value="validado" className="text-white hover:bg-slate-600">
-                    Completado
-                  </SelectItem>
-                  <SelectItem value="invalidado" className="text-white hover:bg-slate-600">
-                    Incompleto
-                  </SelectItem>
+                  {estadosUnicos.map((estado) => (
+                    <SelectItem key={estado} value={estado.toLowerCase()} className="text-white hover:bg-slate-600">
+                      {estado}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -121,29 +161,61 @@ export default function DashboardPage() {
                     className="w-full justify-start text-left font-normal bg-slate-700 border-slate-600 text-white hover:bg-slate-600 mt-1"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filtroRango?.from ? (
-                      filtroRango.to ? (
+                    {filtroRangoIngreso?.from ? (
+                      filtroRangoIngreso.to ? (
                         <>
-                          {format(filtroRango.from, "PPP", { locale: es })} -{" "}
-                          {format(filtroRango.to, "PPP", { locale: es })}
+                          {format(filtroRangoIngreso.from, "PPP", { locale: es })} -{" "}
+                          {format(filtroRangoIngreso.to, "PPP", { locale: es })}
                         </>
                       ) : (
-                        format(filtroRango.from, "PPP", { locale: es })
+                        format(filtroRangoIngreso.from, "PPP", { locale: es })
                       )
                     ) : (
                       "Seleccionar rango"
                     )}
                   </Button>
                 </PopoverTrigger>
-
-                <PopoverContent
-                  className="w-auto p-0 bg-slate-700 border-slate-600"
-                  align="start"
-                >
+                <PopoverContent className="w-auto p-0 bg-slate-700 border-slate-600" align="start">
                   <Calendar
                     mode="range"
-                    selected={filtroRango}
-                    onSelect={setFiltroRango}
+                    selected={filtroRangoIngreso}
+                    onSelect={setFiltroRangoIngreso}
+                    numberOfMonths={2}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Rango de procesado */}
+            <div>
+              <label className="text-sm font-medium text-white">Rango de procesado</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal bg-slate-700 border-slate-600 text-white hover:bg-slate-600 mt-1"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {filtroRangoProcesado?.from ? (
+                      filtroRangoProcesado.to ? (
+                        <>
+                          {format(filtroRangoProcesado.from, "PPP", { locale: es })} -{" "}
+                          {format(filtroRangoProcesado.to, "PPP", { locale: es })}
+                        </>
+                      ) : (
+                        format(filtroRangoProcesado.from, "PPP", { locale: es })
+                      )
+                    ) : (
+                      "Seleccionar rango"
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-slate-700 border-slate-600" align="start">
+                  <Calendar
+                    mode="range"
+                    selected={filtroRangoProcesado}
+                    onSelect={setFiltroRangoProcesado}
                     numberOfMonths={2}
                     initialFocus
                   />
@@ -155,12 +227,13 @@ export default function DashboardPage() {
 
         {/* Tabla */}
         <CensoTable
-          filtroIngreso={filtroIngreso}
+          data={data}
           filtroEstado={filtroEstado}
-          filtroRango={filtroRango}
           busqueda={busqueda}
+          filtroRangoIngreso={filtroRangoIngreso}
+          filtroRangoProcesado={filtroRangoProcesado}
         />
       </main>
     </div>
-  )
+)
 }

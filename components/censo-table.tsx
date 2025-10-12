@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import {
@@ -11,13 +11,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { CheckCircleIcon, XCircleIcon, FileTextIcon } from "lucide-react"
+import { CheckCircleIcon, XCircleIcon, FileTextIcon, RefreshCwIcon } from "lucide-react"
 import { DateRange } from "react-day-picker"
 
 interface CensoTableProps {
-  filtroIngreso: string
+  data: Ingreso[]
   filtroEstado: string
-  filtroRango?: DateRange
+  filtroRangoIngreso?: DateRange
+  filtroRangoProcesado?: DateRange
   busqueda: string
 }
 
@@ -39,7 +40,7 @@ interface Ingreso {
   TIMEPROCESS: string
 }
 
-// ✅ Función para formatear fecha: YYYY/MM/DD HH:mm (zona Bogotá)
+// Formatear fecha
 const formatDate = (date: string | null) => {
   if (!date || date === "-") return "-"
   const d = new Date(date)
@@ -59,44 +60,13 @@ const formatDate = (date: string | null) => {
 }
 
 export default function CensoTable({
-  filtroIngreso,
+  data,
   filtroEstado,
-  filtroRango,
+  filtroRangoIngreso,
+  filtroRangoProcesado,
   busqueda,
 }: CensoTableProps) {
-  const [data, setData] = useState<Ingreso[]>([])
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch("/api/dashboard/censo")
-        const json = await res.json()
-
-        const mapped: Ingreso[] = json[0].map((item: any) => ({
-          AINCONSEC: String(item.AINCONSEC),
-          GPANOMCOM: item.GPANOMCOM,
-          AINFECING: item.AINFECING ? item.AINFECING : "-",
-          PACNUMDOC: item.PACNUMDOC,
-          OBSERVACION: item.OBSERVACION || "-",
-          ESTADO: item.ESTADO,
-          documentos: [
-            { label: "Validados", value: Number(item.PROCESADO) || 0 },
-            { label: "Inválidos", value: Number(item.PARCIALES) || 0 },
-            { label: "Totales", value: Number(item.TOTAL) || 0 },
-          ],
-          exactitud: Number(item.EXACTITUD) || 0,
-          FECHAINSERT: item.FECHAINSERT ? item.FECHAINSERT : "-",
-          TIMEPROCESS: item.TIMEPROCESS || "-",
-        }))
-
-        setData(mapped)
-      } catch (err) {
-        console.error("Error cargando censo:", err)
-      }
-    }
-
-    fetchData()
-  }, [])
+  const [currentPage, setCurrentPage] = useState(1)
 
   const getDocumentoIcon = (label: string) => {
     switch (label) {
@@ -111,12 +81,13 @@ export default function CensoTable({
     }
   }
 
+  // Filtrar datos
   const filteredData = data.filter((item) => {
     const fechaIngreso = item.AINFECING !== "-" ? new Date(item.AINFECING) : null
+    const fechaProcesado = item.FECHAINSERT !== "-" ? new Date(item.FECHAINSERT) : null
 
-    const matchesIngreso =
-      !filtroIngreso ||
-      item.AINCONSEC.toLowerCase().includes(filtroIngreso.toLowerCase())
+    const matchesEstado =
+      filtroEstado === "todos" || item.ESTADO.toLowerCase() === filtroEstado.toLowerCase()
 
     const matchesBusqueda =
       !busqueda ||
@@ -124,26 +95,48 @@ export default function CensoTable({
       item.AINCONSEC.toLowerCase().includes(busqueda.toLowerCase()) ||
       item.PACNUMDOC?.toLowerCase().includes(busqueda.toLowerCase())
 
-    const matchesFecha =
-      !filtroRango?.from ||
-      !filtroRango?.to ||
+    const matchesRangoIngreso =
+      !filtroRangoIngreso?.from ||
+      !filtroRangoIngreso?.to ||
       (fechaIngreso &&
-        fechaIngreso >= filtroRango.from &&
-        fechaIngreso <= filtroRango.to)
+        fechaIngreso >= filtroRangoIngreso.from &&
+        fechaIngreso <= filtroRangoIngreso.to)
 
-    return matchesIngreso && matchesBusqueda && matchesFecha
+    const matchesRangoProcesado =
+      !filtroRangoProcesado?.from ||
+      !filtroRangoProcesado?.to ||
+      (fechaProcesado &&
+        fechaProcesado >= filtroRangoProcesado.from &&
+        fechaProcesado <= filtroRangoProcesado.to)
+
+    return matchesEstado && matchesBusqueda && matchesRangoIngreso && matchesRangoProcesado
   })
+
+  const totalRecords = filteredData.length
+  const originalBlockSize = Math.ceil(data.length / 10) // bloque base
+  const blockSize = Math.max(Math.ceil(totalRecords / 10), originalBlockSize) // bloque adaptativo
+  const totalBlocks = Math.ceil(totalRecords / blockSize)
+
+  // Datos de la página actual
+  const firstIndex = (currentPage - 1) * blockSize
+  const lastIndex = Math.min(firstIndex + blockSize, totalRecords)
+  const currentData = filteredData.slice(firstIndex, lastIndex)
+
+  // Grupo de botones del paginador (máx. 10 botones por grupo)
+  const currentGroup = Math.ceil(currentPage / 10)
+  const startBlock = (currentGroup - 1) * 10 + 1
+  const endBlock = Math.min(currentGroup * 10, totalBlocks)
+
+  const firstRecord = firstIndex + 1
+  const lastRecord = lastIndex
 
   return (
     <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 w-full">
-      <h2 className="text-lg font-semibold text-white mb-2">
-        Resultados de Validación
-      </h2>
+      <h2 className="text-lg font-semibold text-white mb-2">Resultados de Validación</h2>
       <p className="text-slate-400 mb-4 text-sm">
-        {filteredData.length} de {data.length} ingresos mostrados
+        Mostrando {firstRecord}-{lastRecord} de {totalRecords} ingresos
       </p>
 
-      {/* 🔹 Scroll horizontal si el contenido no cabe */}
       <div className="overflow-x-auto">
         <Table className="min-w-full border-collapse text-xs md:text-sm whitespace-nowrap">
           <TableHeader>
@@ -161,10 +154,7 @@ export default function CensoTable({
                 "Tiempo procesado",
                 "Acciones",
               ].map((col) => (
-                <TableHead
-                  key={col}
-                  className="text-slate-300 px-2 py-3 text-center"
-                >
+                <TableHead key={col} className="text-slate-300 px-2 py-3 text-center">
                   {col}
                 </TableHead>
               ))}
@@ -172,26 +162,15 @@ export default function CensoTable({
           </TableHeader>
 
           <TableBody>
-            {filteredData.map((item) => (
-              <TableRow
-                key={item.AINCONSEC}
-                className="border-slate-700 hover:bg-slate-700/50"
-              >
-                <TableCell className="text-white px-2 py-3 text-center">
-                  {item.AINCONSEC}
-                </TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-center">
-                  {formatDate(item.AINFECING)}
-                </TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-center">
-                  {item.PACNUMDOC}
-                </TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-center truncate max-w-[180px]">
+            {currentData.map((item) => (
+              <TableRow key={item.AINCONSEC} className="border-slate-700 hover:bg-slate-700/50">
+                <TableCell className="text-white px-2 py-3 text-center">{item.AINCONSEC}</TableCell>
+                <TableCell className="text-slate-300 px-2 py-3 text-center">{formatDate(item.AINFECING)}</TableCell>
+                <TableCell className="text-slate-300 px-2 py-3 text-center">{item.PACNUMDOC}</TableCell>
+                <TableCell className="text-slate-300 px-2 py-3 text-center break-words whitespace-normal max-w-[180px]">
                   {item.GPANOMCOM}
                 </TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-center">
-                  {item.ESTADO}
-                </TableCell>
+                <TableCell className="text-slate-300 px-2 py-3 text-center">{item.ESTADO}</TableCell>
                 <TableCell className="px-2 py-3 text-left">
                   <div className="space-y-1">
                     {item.documentos.map((doc, i) => (
@@ -206,33 +185,84 @@ export default function CensoTable({
                 <TableCell className="px-2 py-3 text-center">
                   <div className="flex items-center justify-center gap-2">
                     <Progress value={item.exactitud} className="w-16 bg-slate-700" />
-                    <span className="text-sm font-medium text-white">
-                      {item.exactitud}%
-                    </span>
+                    <span className="text-sm font-medium text-white">{item.exactitud}%</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-left truncate max-w-[200px]">
+                <TableCell className="text-slate-300 px-2 py-3 text-left break-words whitespace-normal max-w-[200px]">
                   {item.OBSERVACION}
                 </TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-center">
-                  {formatDate(item.FECHAINSERT)}
-                </TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-center">
-                  {item.TIMEPROCESS}
-                </TableCell>
-                <TableCell className="px-2 py-3 text-center">
+                <TableCell className="text-slate-300 px-2 py-3 text-center">{formatDate(item.FECHAINSERT)}</TableCell>
+                <TableCell className="text-slate-300 px-2 py-3 text-center">{item.TIMEPROCESS}</TableCell>
+                <TableCell className="px-2 py-3 text-center flex flex-row justify-center items-center gap-2">
+                  {/* Icono Ver Detalles */}
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-slate-900 bg-transparent"
+                    className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-slate-900 p-2"
+                    onClick={() => console.log(`Ver detalles ingreso ${item.AINCONSEC}`)}
                   >
-                    Ver Detalles
+                    <FileTextIcon className="h-4 w-4" />
                   </Button>
+
+                  {/* Icono Recargar solo si el estado es Incompleto */}
+                  {item.ESTADO.toLowerCase() === "incompleto" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-slate-900 p-2"
+                      onClick={() => console.log(`Recargar ingreso ${item.AINCONSEC}`)}
+                    >
+                      <RefreshCwIcon className="h-4 w-4" />
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Paginador dinámico */}
+      <div className="flex flex-col md:flex-row justify-between items-center mt-4 space-y-2 md:space-y-0">
+        <div className="flex items-center space-x-2">
+          <Button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((prev) => prev - 1)}
+            className="bg-slate-700 text-slate-300 hover:bg-slate-600"
+          >
+            Anterior
+          </Button>
+
+          {Array.from({ length: endBlock - startBlock + 1 }, (_, i) => startBlock + i).map((block) => {
+            const startRecord = (block - 1) * blockSize + 1
+            const endRecord = Math.min(block * blockSize, totalRecords)
+            return (
+              <Button
+                key={block}
+                onClick={() => setCurrentPage(block)}
+                className={`w-16 h-8 rounded text-sm ${
+                  currentPage === block
+                    ? "bg-yellow-500 text-slate-900 font-bold"
+                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                }`}
+              >
+                {startRecord}-{endRecord}
+              </Button>
+            )
+          })}
+
+          <Button
+            disabled={currentPage === totalBlocks}
+            onClick={() => setCurrentPage((prev) => prev + 1)}
+            className="bg-slate-700 text-slate-300 hover:bg-slate-600"
+          >
+            Siguiente
+          </Button>
+        </div>
+
+        <div className="text-slate-300 text-sm">
+          Mostrando {firstRecord}-{lastRecord} de {totalRecords} registros
+        </div>
       </div>
     </div>
   )

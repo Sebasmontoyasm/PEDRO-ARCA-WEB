@@ -3,7 +3,7 @@ import { executeQuery } from "@/lib/database"
 export async function GET() {
   try {
     const censo = await executeQuery(`
-       CALL SP_ARCA_METRICS_CENSO(50);
+       CALL SP_ARCA_METRICS_CENSO();
     `)
 
     return NextResponse.json(censo)
