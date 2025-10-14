@@ -25,27 +25,23 @@ import {
   BarChart,
   Bar,
 } from "recharts"
-import {
-  Metric,
-  Metric_Doc,
-  Metric_General,
-  Metric_IA,
-} from "@/types/metrics-grid"
+import {Metric, Metric_Doc, Metric_General} from "@/types/metrics-grid"
+import {Document} from "@/types/document"
+
+
 
 export default function Page() {
   const [generalMetric, setMetric] = useState<Metric[]>([])
   const [pieData, setPieData] = useState<any[]>([])
   const [barData, setBarData] = useState<any[]>([])
   const [selectedYear, setSelectedYear] = useState<string>("")
-  const [docsGenerales, setDocsGenerales] = useState<any[]>([])
+  const [docsGenerales, setDocsGenerales] = useState<Metric_Doc[]>([])
 
   useEffect(() => {
     async function fetchMetrics() {
       try {
         const res = await fetch("/api/dashboard/metrics")
         const dataMetrics = await res.json()
-
-        const ia: Metric_IA[] = dataMetrics.ia
         const generalArray: Metric_General[] = dataMetrics.general
 
         const general = generalArray.reduce<Record<string, number>>(
@@ -73,21 +69,22 @@ export default function Page() {
               ).toFixed(2)
             : "0.00"
 
-        const docs: Metric_Doc = dataMetrics.docs[0]
-        const docsGeneralesCalc = [
+        const docs: Document = dataMetrics.docs[0]
+        const docsGeneralesCalc: Metric_Doc[] = [
           {
             title: "Documentos Validados",
             value: docs.PROCESADO,
-            color: "text-white",
+
             trendColor: "text-green-400",
             icon: FileText,
+            showProgress: false,
           },
           {
             title: "Documentos Rechazados",
             value: docs.PARCIALES,
-            color: "text-red-400",
             trendColor: "text-red-400",
             icon: FileWarning,
+            showProgress: false,
           },
           {
             title: "Tasa de cumplimiento de documentos",
@@ -95,6 +92,7 @@ export default function Page() {
             color: "text-green-400",
             trendColor: "text-green-400",
             icon: TrendingUp,
+            showProgress: true,
           },
         ]
 
@@ -159,18 +157,22 @@ export default function Page() {
             value: general.PENDIENTE ?? 0,
             trend: "up",
             icon: Users,
+            showProgress: false,
           },
           {
             title: "Ingresos Procesados",
             value: pProcesado ?? 0,
             trend: "up",
             icon: SearchCheck,
+            showProgress: false,
           },
           {
             title: "Ingresos sin documentos obligatorios",
             value: general.INCOMPLETO ?? 0,
             trend: "down",
             icon: CircleX,
+            color: "text-red-400",
+            showProgress: false,
           },
           {
             title: "Ingresos con documentación completa",
@@ -178,12 +180,16 @@ export default function Page() {
               generalArray.find((g) => g.NOMBRE === "Procesado")?.TOTAL ?? 0,
             trend: "up",
             icon: Bot,
+            color: "text-green-400",
+            showProgress: false,
           },
           {
             title: "Tasa de cumplimiento de ingresos",
             value: `${exactitud}%`,
             trend: "up",
             icon: Bot,
+            color: "text-green-400",
+            showProgress: true,
           },
         ]
 
@@ -204,6 +210,7 @@ export default function Page() {
         Métricas Generales
       </h2>
 
+      {/* MÉTRICAS DE INGRESOS */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {generalMetric.map((metric, index) => {
           const Icon = metric.icon
@@ -230,18 +237,21 @@ export default function Page() {
                 >
                   {metric.value}
                 </div>
+
+                {metric.showProgress && (
                   <div className="mt-2">
                     <Progress
-                      value={parseFloat(String(metric.value))}
+                      value={parseFloat(String(metric.value).replace("%", ""))}
                       className="w-full bg-slate-700"
                     />
                   </div>
-                
+                )}
               </CardContent>
             </Card>
           )
         })}
 
+        {/* MÉTRICAS DE DOCUMENTOS */}
         {docsGenerales.map((doc, index) => {
           const Icon = doc.icon
           return (
@@ -256,12 +266,22 @@ export default function Page() {
                 <div className={`text-2xl font-bold ${doc.color}`}>
                   {doc.value}
                 </div>
+
+                {doc.showProgress && (
+                  <div className="mt-2">
+                    <Progress
+                      value={parseFloat(String(doc.value).replace("%", ""))}
+                      className="w-full bg-slate-700"
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           )
         })}
       </div>
 
+      {/* GRÁFICAS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="bg-slate-800 border-slate-700">
           <CardHeader>

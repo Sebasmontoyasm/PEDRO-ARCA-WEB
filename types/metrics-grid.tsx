@@ -1,27 +1,22 @@
-export interface Metric {
+export type Metric = {
   title: string
   value: string | number
-  change?: string
   trend: "up" | "down"
   icon: any
-  description?: string
   color?: string
+  showProgress?: boolean
 }
 
-export interface Metric_Doc {
-  PROCESADO: number
-  PARCIALES: number
-  TASA_CUMPLIMIENTO: number
+export type Metric_Doc = {
+  title: string
+  value: string | number
+  color?: string
+  trendColor?: string
+  icon: any
+  showProgress?: boolean
 }
 
-export interface Metric_General {
+export type Metric_General = {
   NOMBRE: string
   TOTAL: number
-}
-
-export interface Metric_IA {
-  AINID: number
-  EXACTITUD: number
-  CONFIANZA: number
-  CUMPLIMIENTO: number
 }
