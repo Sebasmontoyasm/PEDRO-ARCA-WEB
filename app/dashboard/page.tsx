@@ -52,7 +52,7 @@ export default function DashboardPage() {
         const res = await fetch("/api/dashboard/censo")
         const json = await res.json()
 
-        const mapped: Ingreso[] = json[0].map((item: any) => ({
+        const mapped: Ingreso[] = json.censo.map((item: any) => ({
           AINCONSEC: String(item.AINCONSEC),
           GPANOMCOM: item.GPANOMCOM,
           AINFECING: item.AINFECING ? item.AINFECING : "-",
