@@ -31,10 +31,10 @@ export async function getMetricDocs() {
     const [docs] = (await executeQuery(SQL)) as any[]
 
     return docs || []
-    
+
   } catch (error) {
     console.error("Error obteniendo métricas:", error)
-    return [] 
+    return []
   }
 }
 
@@ -73,10 +73,10 @@ export async function getMetricCensoxMes() {
   }
 }
 
-export async function Censo() {
+export async function getMetricCenso() {
   try {
     const censoTableQuery = `
-      CALL SP_ARCA_METRICS_CENSO(50);
+      CALL SP_ARCA_METRICS_CENSO();
     `
     const [censoTableData] = (await executeQuery(censoTableQuery)) as any[]
 
@@ -87,6 +87,23 @@ export async function Censo() {
     console.error("Error obteniendo datos de gráficos:", error)
     return {
       censo: [],
+    }
+  }
+}
+export async function censoProcess(AIND: string) {
+  try {
+    const censoProcessTableQuery = `
+      CALL SP_ARCA_CENSO_PROCESS();
+    `
+    const [censoProcessData] = (await executeQuery(censoProcessTableQuery)) as any[]
+
+    return {
+      censoProcess: censoProcessData || []
+    }
+  } catch (error) {
+    console.error("Error obteniendo datos de gráficos:", error)
+    return {
+      censoProcess: [],
     }
   }
 }

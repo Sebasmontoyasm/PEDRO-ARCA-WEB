@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server"
-import { executeQuery } from "@/lib/database"
+import { getMetricCenso, censoProcess } from "@/lib/database"
 export async function GET() {
   try {
-    const censo = await executeQuery(`
-       CALL SP_ARCA_METRICS_CENSO();
-    `)
-
+    const censoProc = await censoProcess('3342');
+    const censo = await getMetricCenso()
     return NextResponse.json(censo)
   } catch (error) {
     console.error("Error fetching censo:", error)

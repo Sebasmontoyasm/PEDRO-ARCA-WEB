@@ -3,16 +3,10 @@
 import { useState } from "react"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { CheckCircleIcon, XCircleIcon, FileTextIcon, RefreshCwIcon } from "lucide-react"
 import { DateRange } from "react-day-picker"
+import CensoDetail from "@/components/censo-process"
 
 interface CensoTableProps {
   data: Ingreso[]
@@ -40,7 +34,6 @@ interface Ingreso {
   TIMEPROCESS: string
 }
 
-// Formatear fecha
 const formatDate = (date: string | null) => {
   if (!date || date === "-") return "-"
   const d = new Date(date)
@@ -67,6 +60,8 @@ export default function CensoTable({
   busqueda,
 }: CensoTableProps) {
   const [currentPage, setCurrentPage] = useState(1)
+  const [openDetail, setOpenDetail] = useState(false)
+  const [selectedRow, setSelectedRow] = useState<Ingreso | null>(null)
 
   const getDocumentoIcon = (label: string) => {
     switch (label) {
@@ -81,7 +76,7 @@ export default function CensoTable({
     }
   }
 
-  // Filtrar datos
+  // 🔎 Filtrado
   const filteredData = data.filter((item) => {
     const fechaIngreso = item.AINFECING !== "-" ? new Date(item.AINFECING) : null
     const fechaProcesado = item.FECHAINSERT !== "-" ? new Date(item.FECHAINSERT) : null
@@ -112,23 +107,24 @@ export default function CensoTable({
     return matchesEstado && matchesBusqueda && matchesRangoIngreso && matchesRangoProcesado
   })
 
+  // 📊 Paginación dinámica
   const totalRecords = filteredData.length
-  const originalBlockSize = Math.ceil(data.length / 10) // bloque base
-  const blockSize = Math.max(Math.ceil(totalRecords / 10), originalBlockSize) // bloque adaptativo
+  const blockSize = Math.max(Math.ceil(totalRecords / 10), 10)
   const totalBlocks = Math.ceil(totalRecords / blockSize)
-
-  // Datos de la página actual
   const firstIndex = (currentPage - 1) * blockSize
   const lastIndex = Math.min(firstIndex + blockSize, totalRecords)
   const currentData = filteredData.slice(firstIndex, lastIndex)
+  const firstRecord = firstIndex + 1
+  const lastRecord = lastIndex
 
-  // Grupo de botones del paginador (máx. 10 botones por grupo)
   const currentGroup = Math.ceil(currentPage / 10)
   const startBlock = (currentGroup - 1) * 10 + 1
   const endBlock = Math.min(currentGroup * 10, totalBlocks)
 
-  const firstRecord = firstIndex + 1
-  const lastRecord = lastIndex
+  const handleOpenDetail = (row: Ingreso) => {
+    setSelectedRow(row)
+    setOpenDetail(true)
+  }
 
   return (
     <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 w-full">
@@ -147,7 +143,7 @@ export default function CensoTable({
                 "Documento",
                 "Paciente",
                 "Estado",
-                "Documentos",
+                "Documentos Obligatorios",
                 "Exactitud",
                 "Observación",
                 "Fecha procesado",
@@ -176,7 +172,7 @@ export default function CensoTable({
                     {item.documentos.map((doc, i) => (
                       <div key={i} className="flex items-center gap-1">
                         {getDocumentoIcon(doc.label)}
-                        <span className="flex-1 text-slate-300">{doc.label}</span>
+                        {doc.label === "Totales" ? "Totales obligatorios" : doc.label}
                         <span className="text-xs text-slate-400">{doc.value}</span>
                       </div>
                     ))}
@@ -193,18 +189,16 @@ export default function CensoTable({
                 </TableCell>
                 <TableCell className="text-slate-300 px-2 py-3 text-center">{formatDate(item.FECHAINSERT)}</TableCell>
                 <TableCell className="text-slate-300 px-2 py-3 text-center">{item.TIMEPROCESS}</TableCell>
-                <TableCell className="px-2 py-3 text-center flex flex-row justify-center items-center gap-2">
-                  {/* Icono Ver Detalles */}
+                <TableCell className="px-2 py-3 text-center flex justify-center items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-slate-900 p-2"
-                    onClick={() => console.log(`Ver detalles ingreso ${item.AINCONSEC}`)}
+                    onClick={() => handleOpenDetail(item)}
                   >
                     <FileTextIcon className="h-4 w-4" />
                   </Button>
 
-                  {/* Icono Recargar solo si el estado es Incompleto */}
                   {item.ESTADO.toLowerCase() === "incompleto" && (
                     <Button
                       variant="outline"
@@ -222,7 +216,14 @@ export default function CensoTable({
         </Table>
       </div>
 
-      {/* Paginador dinámico */}
+      <CensoDetail
+        open={openDetail}
+        onClose={() => setOpenDetail(false)}
+        data={selectedRow?.documentos ?? []}
+      />
+
+
+      {/* 📄 Paginador */}
       <div className="flex flex-col md:flex-row justify-between items-center mt-4 space-y-2 md:space-y-0">
         <div className="flex items-center space-x-2">
           <Button
@@ -240,11 +241,10 @@ export default function CensoTable({
               <Button
                 key={block}
                 onClick={() => setCurrentPage(block)}
-                className={`w-16 h-8 rounded text-sm ${
-                  currentPage === block
+                className={`w-16 h-8 rounded text-sm ${currentPage === block
                     ? "bg-yellow-500 text-slate-900 font-bold"
                     : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                }`}
+                  }`}
               >
                 {startRecord}-{endRecord}
               </Button>
