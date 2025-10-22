@@ -7,7 +7,14 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon, FilterIcon, SearchIcon, FileTextIcon, DownloadIcon } from "lucide-react"
+import {
+  CalendarIcon,
+  FilterIcon,
+  SearchIcon,
+  FileTextIcon,
+  DownloadIcon,
+  RotateCcwIcon
+} from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { DateRange } from "react-day-picker"
@@ -31,14 +38,12 @@ interface Ingreso {
 
 export default function DashboardPage() {
   const [dark] = useState(true)
-
   const [data, setData] = useState<Ingreso[]>([])
 
   const [filtroEstado, setFiltroEstado] = useState("todos")
   const [busqueda, setBusqueda] = useState("")
   const [filtroRangoIngreso, setFiltroRangoIngreso] = useState<DateRange | undefined>()
   const [filtroRangoProcesado, setFiltroRangoProcesado] = useState<DateRange | undefined>()
-
   const [estadosUnicos, setEstadosUnicos] = useState<string[]>([])
 
   useEffect(() => {
@@ -71,7 +76,6 @@ export default function DashboardPage() {
 
         setData(mapped)
 
-
         const estados = Array.from(new Set(mapped.map(i => i.ESTADO)))
         setEstadosUnicos(estados)
       } catch (err) {
@@ -81,6 +85,13 @@ export default function DashboardPage() {
 
     fetchData()
   }, [])
+
+  const handleResetFiltros = () => {
+    setFiltroEstado("todos")
+    setBusqueda("")
+    setFiltroRangoIngreso(undefined)
+    setFiltroRangoProcesado(undefined)
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
@@ -110,10 +121,26 @@ export default function DashboardPage() {
 
         {/* Filtros */}
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-          <h2 className="flex items-center gap-2 text-white text-lg font-semibold">
-            <FilterIcon className="h-5 w-5 text-yellow-500" /> Filtros de Búsqueda
-          </h2>
-          <p className="text-slate-400 mb-4">Filtra los resultados por estado, fecha de ingreso, fecha procesado o búsqueda general</p>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="flex items-center gap-2 text-white text-lg font-semibold">
+              <FilterIcon className="h-5 w-5 text-yellow-500" /> Filtros de Búsqueda
+            </h2>
+
+            {/* 🔁 Botón Reset con fondo rojo */}
+            <Button
+              variant="default"
+              size="icon"
+              onClick={handleResetFiltros}
+              className="bg-red-600 hover:bg-red-700 text-white shadow-md transition-all"
+              title="Reiniciar filtros"
+            >
+              <RotateCcwIcon className="h-5 w-5" />
+            </Button>
+          </div>
+
+          <p className="text-slate-400 mb-4">
+            Filtra los resultados por estado, fecha de ingreso, fecha procesado o búsqueda general
+          </p>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Búsqueda General */}
@@ -235,5 +262,5 @@ export default function DashboardPage() {
         <Footer />
       </main>
     </div>
-)
+  )
 }

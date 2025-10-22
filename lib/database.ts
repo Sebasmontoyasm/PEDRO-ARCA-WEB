@@ -90,22 +90,17 @@ export async function getMetricCenso() {
     }
   }
 }
-export async function censoProcess(AIND: string) {
+export async function censoProcess(AIND: number) {
   try {
-    const censoProcessTableQuery = `
-      CALL SP_ARCA_CENSO_PROCESS();
-    `
-    const [censoProcessData] = (await executeQuery(censoProcessTableQuery)) as any[]
+    const censoProcessTableQuery = `CALL SP_ARCA_CENSO_PROCESS(?);`
+    const [rows] = (await executeQuery(censoProcessTableQuery, [AIND])) as any[]
 
-    return {
-      censoProcess: censoProcessData || []
-    }
+    return { censoProcess: rows || [] }
   } catch (error) {
-    console.error("Error obteniendo datos de gráficos:", error)
-    return {
-      censoProcess: [],
-    }
+    console.error("Error ejecutando SP_ARCA_CENSO_PROCESS:", error)
+    return { censoProcess: [] }
   }
 }
+
 
 export default pool

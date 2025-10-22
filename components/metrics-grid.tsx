@@ -25,8 +25,8 @@ import {
   BarChart,
   Bar,
 } from "recharts"
-import {Metric, Metric_Doc, Metric_General} from "@/types/metrics-grid"
-import {Document} from "@/types/document"
+import { Metric, Metric_Doc, Metric_General } from "@/types/metrics-grid"
+import { Document } from "@/types/document"
 
 
 
@@ -60,13 +60,14 @@ export default function Page() {
           (generalArray.find((g) => g.NOMBRE === "Procesado")?.TOTAL ?? 0) +
           (generalArray.find((g) => g.NOMBRE === "Incompleto")?.TOTAL ?? 0)
 
-        const exactitud =
-          general.PROCESADO + general.INCOMPLETO > 0
-            ? (
-                (general.PROCESADO /
-                  (general.PROCESADO + general.INCOMPLETO)) *
-                100
-              ).toFixed(2)
+        const procesado = general.PROCESADO ?? 0
+        const incompleto = general.INCOMPLETO ?? 0
+
+        const gtasa_cumplimiento =
+          procesado + incompleto > 0
+            ? incompleto === 0
+              ? "100.00"
+              : ((procesado / (procesado + incompleto)) * 100).toFixed(2)
             : "0.00"
 
         const docs: Document = dataMetrics.docs[0]
@@ -185,7 +186,7 @@ export default function Page() {
           },
           {
             title: "Tasa de cumplimiento de ingresos",
-            value: `${exactitud}%`,
+            value: `${gtasa_cumplimiento}%`,
             trend: "up",
             icon: Bot,
             color: "text-green-400",
@@ -223,17 +224,15 @@ export default function Page() {
                   {metric.title}
                 </CardTitle>
                 <Icon
-                  className={`h-4 w-4 ${
-                    metric.color ??
+                  className={`h-4 w-4 ${metric.color ??
                     (isPositive ? "text-green-400" : "text-red-400")
-                  }`}
+                    }`}
                 />
               </CardHeader>
               <CardContent>
                 <div
-                  className={`text-2xl font-bold ${
-                    metric.color ?? "text-white"
-                  }`}
+                  className={`text-2xl font-bold ${metric.color ?? "text-white"
+                    }`}
                 >
                   {metric.value}
                 </div>

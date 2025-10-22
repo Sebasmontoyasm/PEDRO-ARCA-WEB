@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,23 +9,39 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CensoDetailProps } from "@/types/censo";
+import { CensoDetailProps, CensoDocument } from "@/types/censo";
 
-export default function CensoDetail({ open, onClose}: CensoDetailProps) {
-   const data: any = [];
+
+export default function CensoDetail({ open, onClose, data }: CensoDetailProps) {
+  const [docs, setDocs] = useState<CensoDocument[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (open && data?.AINID) {
+      setLoading(true);
+      fetch(`/api/censo/process?ainid=${data.AINID}`)
+        .then((res) => res.json())
+        .then((res) => setDocs(res?.censoProcess || []))
+        .catch((err) => console.error("Error cargando detalles:", err))
+        .finally(() => setLoading(false));
+    }
+  }, [open, data?.AINID]);
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl bg-slate-800 border border-slate-700 text-slate-200">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-yellow-400">
-            Documentos procesados
+            Detalle del Ingreso {data?.AINCONSEC}
           </DialogTitle>
           <DialogDescription className="text-slate-400">
-            Detalle del procesamiento de documentos asociados al censo.
+            Documentos procesados del ingreso seleccionado.
           </DialogDescription>
         </DialogHeader>
 
-        {data.length > 0 ? (
+        {loading ? (
+          <p className="text-center text-slate-400 mt-4">Cargando detalles...</p>
+        ) : docs.length > 0 ? (
           <div className="mt-4 overflow-x-auto rounded-lg border border-slate-700 max-h-[60vh] overflow-y-auto">
             <table className="min-w-full text-sm text-left">
               <thead className="bg-slate-700 text-slate-300 sticky top-0">
@@ -37,26 +54,26 @@ export default function CensoDetail({ open, onClose}: CensoDetailProps) {
                 </tr>
               </thead>
               <tbody>
-                {data.map((doc:any, index:any) => (
+                {docs.map((doc: CensoDocument, index: number) => (
                   <tr
-                    key={index}
+                    key={`${doc.Documento}-${index}`}
                     className="hover:bg-slate-700/40 border-b border-slate-700"
                   >
-                    <td className="px-4 py-2">{doc.documento}</td>
-                    <td className="px-4 py-2">{doc.clasificacion}</td>
+                    <td className="px-4 py-2">{doc.Documento}</td>
+                    <td className="px-4 py-2">{doc.Clasificacion}</td>
                     <td className="px-4 py-2 truncate max-w-[200px]">
                       <a
-                        href={doc.ruta}
+                        href={doc.Ruta}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-400 hover:underline"
                       >
-                        {doc.ruta}
+                        {doc.Ruta}
                       </a>
                     </td>
-                    <td className="px-4 py-2">{doc.estado}</td>
+                    <td className="px-4 py-2">{doc.Estado}</td>
                     <td className="px-4 py-2">
-                      {new Date(doc.fechaProcess).toLocaleString()}
+                      {new Date(doc.FechaProceso).toLocaleString()}
                     </td>
                   </tr>
                 ))}
