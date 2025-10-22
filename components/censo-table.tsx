@@ -154,9 +154,9 @@ export default function CensoTable({
           </TableHeader>
 
           <TableBody>
-            {currentData.map((item) => (
+            {currentData.map((item: Ingreso) => (
               <TableRow
-                key={item.AINCONSEC}
+                key={item.AINID}
                 className="border-slate-700 hover:bg-slate-700/50"
               >
                 <TableCell className="text-white px-2 py-3 text-center">
@@ -190,9 +190,9 @@ export default function CensoTable({
                 </TableCell>
                 <TableCell className="px-2 py-3 text-center">
                   <div className="flex items-center justify-center gap-2">
-                    <Progress value={item.exactitud} className="w-16 bg-slate-700" />
+                    <Progress value={item.EXACTITUD} className="w-16 bg-slate-700" />
                     <span className="text-sm font-medium text-white">
-                      {item.exactitud}%
+                      {item.EXACTITUD}%
                     </span>
                   </div>
                 </TableCell>

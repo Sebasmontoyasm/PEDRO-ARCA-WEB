@@ -78,7 +78,7 @@ export async function getMetricCenso() {
     const censoTableQuery = `
       CALL SP_ARCA_METRICS_CENSO();
     `
-    const [censoTableData] = (await executeQuery(censoTableQuery)) as any[]
+    const [censoTableData] = await executeQuery(censoTableQuery) as any;
 
     return {
       censo: censoTableData || []
@@ -90,10 +90,10 @@ export async function getMetricCenso() {
     }
   }
 }
-export async function censoProcess(AIND: number) {
+export async function censoProcess(pAINID_CENSO: number) {
   try {
     const censoProcessTableQuery = `CALL SP_ARCA_CENSO_PROCESS(?);`
-    const [rows] = (await executeQuery(censoProcessTableQuery, [AIND])) as any[]
+    const [rows] = (await executeQuery(censoProcessTableQuery, [pAINID_CENSO])) as any[]
 
     return { censoProcess: rows || [] }
   } catch (error) {
@@ -102,5 +102,27 @@ export async function censoProcess(AIND: number) {
   }
 }
 
+export async function getTimeArcaExtraccion() {
+  try {
+   
+
+    const timeAnaExtraccionQuery = `
+      SELECT DATE_FORMAT(fechainsert, '%d-%m-%Y %r') AS fechainsert
+      FROM Monitoreo_rpa
+      ORDER BY fechainsert DESC
+      LIMIT 1;  
+    `
+    const [timeAnaExtraccion] = await executeQuery(timeAnaExtraccionQuery) as any;
+
+    return {
+      timeAnaExtraccion: timeAnaExtraccion || []
+    }
+  } catch (error) {
+    console.error("Error obteniendo datos de gráficos:", error)
+    return {
+      timeAnaExtraccion: [],
+    }
+  }
+}
 
 export default pool

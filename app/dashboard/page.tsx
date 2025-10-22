@@ -22,19 +22,7 @@ import { DateRange } from "react-day-picker"
 import MetricsGrid from "@/components/metrics-grid"
 import CensoTable from "@/components/censo-table"
 import Footer from "@/components/footer"
-
-interface Ingreso {
-  AINCONSEC: string
-  AINFECING: string
-  PACNUMDOC: string
-  GPANOMCOM: string
-  ESTADO: string
-  documentos: { label: string; value: number }[]
-  FECHAINSERT: string
-  OBSERVACION: string
-  exactitud: number
-  TIMEPROCESS: string
-}
+import { Ingreso } from "@/types/censo"
 
 export default function DashboardPage() {
   const [dark] = useState(true)
@@ -58,6 +46,7 @@ export default function DashboardPage() {
         const json = await res.json()
 
         const mapped: Ingreso[] = json.censo.map((item: any) => ({
+          AINID: item.AINID,
           AINCONSEC: String(item.AINCONSEC),
           GPANOMCOM: item.GPANOMCOM,
           AINFECING: item.AINFECING ? item.AINFECING : "-",
@@ -69,7 +58,7 @@ export default function DashboardPage() {
             { label: "Inválidos", value: Number(item.PARCIALES) || 0 },
             { label: "Totales", value: Number(item.TOTAL) || 0 },
           ],
-          exactitud: Number(item.EXACTITUD) || 0,
+          EXACTITUD: Number(item.EXACTITUD) || 0,
           FECHAINSERT: item.FECHAINSERT ? item.FECHAINSERT : "-",
           TIMEPROCESS: item.TIMEPROCESS || "-",
         }))
@@ -126,16 +115,16 @@ export default function DashboardPage() {
               <FilterIcon className="h-5 w-5 text-yellow-500" /> Filtros de Búsqueda
             </h2>
 
-            {/* 🔁 Botón Reset con fondo rojo */}
             <Button
-              variant="default"
-              size="icon"
               onClick={handleResetFiltros}
-              className="bg-red-600 hover:bg-red-700 text-white shadow-md transition-all"
+              className="w-8 h-8 rounded text-sm bg-black border border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-slate-900 transition-colors"
               title="Reiniciar filtros"
             >
               <RotateCcwIcon className="h-5 w-5" />
             </Button>
+
+
+
           </div>
 
           <p className="text-slate-400 mb-4">

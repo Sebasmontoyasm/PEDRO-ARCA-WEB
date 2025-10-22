@@ -13,6 +13,7 @@ import { Bell, Settings, ChevronDown, Calendar, Sun, Moon } from "lucide-react"
 
 export function DashboardHeader() {
   const [dark, setDark] = useState(false)
+  const [fechaExtraccion, setFecha] = useState<string | null>(null) // Estado para la fecha
 
   useEffect(() => {
     if (dark) {
@@ -21,6 +22,21 @@ export function DashboardHeader() {
       document.documentElement.classList.remove("dark")
     }
   }, [dark])
+
+  useEffect(() => {
+    async function fetchFechaAnaExtraccion() {
+      try {
+        const res = await fetch('/api/rpa/extraccion')  // Ajusta la ruta a tu endpoint real
+        const data = await res.json()
+        setFecha(data.timeAnaExtraccion.fechainsert) // Ajusta según la estructura real que recibas
+      } catch (error) {
+        console.error(error)
+        setFecha(null)
+      }
+    }
+
+    fetchFechaAnaExtraccion()
+  }, [])
 
   return (
     <header className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
@@ -63,6 +79,17 @@ export function DashboardHeader() {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Aquí la etiqueta fecha antes del dropdown */}
+            {fechaExtraccion ? (
+              <span className="text-sm font-semibold text-while select-none">
+                Última actualización el {fechaExtraccion}
+              </span>
+            ) : (
+              <span className="text-sm text-muted-foreground select-none">
+                Cargando fecha...
+              </span>
+            )}
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button

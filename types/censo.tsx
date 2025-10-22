@@ -7,6 +7,7 @@ export interface CensoDocument {
   Documento: string
   Clasificacion: string
   Ruta: string
+  Archivo: string
   Estado: string
   FechaProceso: string
 }
@@ -14,7 +15,7 @@ export interface CensoDocument {
 export interface CensoDetailProps {
   open: boolean
   onClose: () => void
-  data?: Ingreso | null
+  data: Ingreso | null
 }
 
 export interface Ingreso {
@@ -27,6 +28,6 @@ export interface Ingreso {
   documentos: Documento[]
   FECHAINSERT: string
   OBSERVACION: string
-  exactitud: number
+  EXACTITUD: number
   TIMEPROCESS: string 
 }
