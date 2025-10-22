@@ -109,7 +109,7 @@ export async function getTimeArcaExtraccion() {
     const timeAnaExtraccionQuery = `
       SELECT DATE_FORMAT(DATE_SUB(fechainsert, INTERVAL 1 HOUR), '%d-%m-%Y %r') AS fechainsert
       FROM Monitoreo_rpa
-      ORDER BY fechainsert DESC
+      ORDER BY fechainsert ASC
       LIMIT 1;
     `
     const [timeAnaExtraccion] = await executeQuery(timeAnaExtraccionQuery) as any;
