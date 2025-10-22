@@ -104,13 +104,13 @@ export async function censoProcess(pAINID_CENSO: number) {
 
 export async function getTimeArcaExtraccion() {
   try {
-   
+
 
     const timeAnaExtraccionQuery = `
-      SELECT DATE_FORMAT(fechainsert, '%d-%m-%Y %r') AS fechainsert
+      SELECT DATE_FORMAT(DATE_SUB(fechainsert, INTERVAL 1 HOUR), '%d-%m-%Y %r') AS fechainsert
       FROM Monitoreo_rpa
       ORDER BY fechainsert DESC
-      LIMIT 1;  
+      LIMIT 1;
     `
     const [timeAnaExtraccion] = await executeQuery(timeAnaExtraccionQuery) as any;
 
