@@ -13,7 +13,7 @@ import { Bell, Settings, ChevronDown, Calendar, Sun, Moon } from "lucide-react"
 
 export function DashboardHeader() {
   const [dark, setDark] = useState(false)
-  const [fechaExtraccion, setFecha] = useState<string | null>(null) // Estado para la fecha
+  const [fechaExtraccion, setFecha] = useState<string | null>(null)
 
   useEffect(() => {
     if (dark) {
@@ -26,9 +26,9 @@ export function DashboardHeader() {
   useEffect(() => {
     async function fetchFechaAnaExtraccion() {
       try {
-        const res = await fetch('/api/rpa/extraccion')  // Ajusta la ruta a tu endpoint real
+        const res = await fetch('/api/rpa/extraccion') 
         const data = await res.json()
-        setFecha(data.timeAnaExtraccion.fechainsert) // Ajusta según la estructura real que recibas
+        setFecha(data.timeAnaExtraccion.fechainsert)
       } catch (error) {
         console.error(error)
         setFecha(null)

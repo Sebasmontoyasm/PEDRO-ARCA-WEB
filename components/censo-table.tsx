@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,9 +54,15 @@ export default function CensoTable({
   filtroRangoProcesado,
   busqueda
 }: CensoTableProps) {
+  const [tableData, setTableData] = useState(data);
   const [currentPage, setCurrentPage] = useState(1);
   const [openDetail, setOpenDetail] = useState(false);
   const [selectedRow, setSelectedRow] = useState<Ingreso | null>(null);
+  const [loadingId, setLoadingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    setTableData(data);
+  }, [data]);
 
   const getDocumentoIcon = (label: string) => {
     switch (label) {
@@ -71,12 +77,13 @@ export default function CensoTable({
     }
   };
 
-  const filteredData = data.filter((item) => {
+  const filteredData = tableData.filter((item) => {
     const fechaIngreso = item.AINFECING !== "-" ? new Date(item.AINFECING) : null;
     const fechaProcesado = item.FECHAINSERT !== "-" ? new Date(item.FECHAINSERT) : null;
 
     const matchesEstado =
-      filtroEstado === "todos" || item.ESTADO.toLowerCase() === filtroEstado.toLowerCase();
+      filtroEstado === "todos" ||
+      (item.ESTADO && item.ESTADO.toLowerCase().includes(filtroEstado.toLowerCase()));
 
     const matchesBusqueda =
       !busqueda ||
@@ -109,7 +116,6 @@ export default function CensoTable({
   const currentData = filteredData.slice(firstIndex, lastIndex);
   const firstRecord = firstIndex + 1;
   const lastRecord = lastIndex;
-
   const currentGroup = Math.ceil(currentPage / 10);
   const startBlock = (currentGroup - 1) * 10 + 1;
   const endBlock = Math.min(currentGroup * 10, totalBlocks);
@@ -118,6 +124,33 @@ export default function CensoTable({
     setSelectedRow(row);
     setOpenDetail(true);
   };
+
+  const handleReprocesar = async (ainid: number) => {
+    try {
+      setLoadingId(ainid);
+
+      const response = await fetch(`/api/dashboard/censo/reprocesar?ainid=${ainid}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+
+      if (!response.ok) throw new Error("Error al reprocesar el ingreso");
+
+      setTableData((prev) => prev.filter((item) => item.AINID !== ainid));
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      alert("Ocurrió un error al reprocesar el ingreso ❌");
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  if (!data || data.length === 0) {
+    return <div className="text-white p-4">Cargando datos...</div>;
+  }
 
   return (
     <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 w-full">
@@ -143,10 +176,7 @@ export default function CensoTable({
                 "Tiempo procesado",
                 "Acciones"
               ].map((col) => (
-                <TableHead
-                  key={col}
-                  className="text-slate-300 px-2 py-3 text-center"
-                >
+                <TableHead key={col} className="text-slate-300 px-2 py-3 text-center">
                   {col}
                 </TableHead>
               ))}
@@ -155,32 +185,16 @@ export default function CensoTable({
 
           <TableBody>
             {currentData.map((item: Ingreso) => (
-              <TableRow
-                key={item.AINID}
-                className="border-slate-700 hover:bg-slate-700/50"
-              >
-                <TableCell className="text-white px-2 py-3 text-center">
-                  {item.AINCONSEC}
-                </TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-center">
-                  {formatDate(item.AINFECING)}
-                </TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-center">
-                  {item.PACNUMDOC}
-                </TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-center break-words whitespace-normal max-w-[180px]">
-                  {item.GPANOMCOM}
-                </TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-center">
-                  {item.ESTADO}
-                </TableCell>
+              <TableRow key={item.AINID} className="border-slate-700 hover:bg-slate-700/50">
+                <TableCell className="text-white px-2 py-3 text-center">{item.AINCONSEC}</TableCell>
+                <TableCell className="text-slate-300 px-2 py-3 text-center">{formatDate(item.AINFECING)}</TableCell>
+                <TableCell className="text-slate-300 px-2 py-3 text-center">{item.PACNUMDOC}</TableCell>
+                <TableCell className="text-slate-300 px-2 py-3 text-center break-words whitespace-normal max-w-[180px]">{item.GPANOMCOM}</TableCell>
+                <TableCell className="text-slate-300 px-2 py-3 text-center">{item.ESTADO}</TableCell>
                 <TableCell className="px-2 py-3 text-left">
                   <div className="space-y-1">
-                    {item.documentos.map((doc: Documento) => (
-                      <div
-                        key={`${doc.label}-${doc.value}`}
-                        className="flex items-center gap-1"
-                      >
+                    {Array.isArray(item.documentos) && item.documentos.map((doc: Documento) => (
+                      <div key={`${doc.label}-${doc.value}`} className="flex items-center gap-1">
                         {getDocumentoIcon(doc.label)}
                         {doc.label === "Totales" ? "Totales obligatorios" : doc.label}
                         <span className="text-xs text-slate-400">{doc.value}</span>
@@ -191,21 +205,12 @@ export default function CensoTable({
                 <TableCell className="px-2 py-3 text-center">
                   <div className="flex items-center justify-center gap-2">
                     <Progress value={item.EXACTITUD} className="w-16 bg-slate-700" />
-                    <span className="text-sm font-medium text-white">
-                      {item.EXACTITUD}%
-                    </span>
+                    <span className="text-sm font-medium text-white">{item.EXACTITUD}%</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-left break-words whitespace-normal max-w-[200px]">
-                  {item.OBSERVACION}
-                </TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-center">
-                  {formatDate(item.FECHAINSERT)}
-                </TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-center">
-                  {item.TIMEPROCESS}
-                </TableCell>
-
+                <TableCell className="text-slate-300 px-2 py-3 text-left break-words whitespace-normal max-w-[200px]">{item.OBSERVACION}</TableCell>
+                <TableCell className="text-slate-300 px-2 py-3 text-center">{formatDate(item.FECHAINSERT)}</TableCell>
+                <TableCell className="text-slate-300 px-2 py-3 text-center">{item.TIMEPROCESS}</TableCell>
                 <TableCell className="px-2 py-3 text-center flex justify-center items-center gap-2">
                   <Button
                     variant="outline"
@@ -220,41 +225,42 @@ export default function CensoTable({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-slate-900 p-2"
-                      onClick={() => console.log(`Recargar ingreso ${item.AINCONSEC}`)}
+                      disabled={loadingId === item.AINID}
+                      className={`border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-slate-900 p-2 ${
+                        loadingId === item.AINID ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                      onClick={() => handleReprocesar(item.AINID)}
                     >
-                      <RefreshCwIcon className="h-4 w-4" />
+                      {loadingId === item.AINID ? (
+                        <RefreshCwIcon className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCwIcon className="h-4 w-4" />
+                      )}
                     </Button>
                   )}
                 </TableCell>
               </TableRow>
             ))}
+
+            {filteredData.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={11} className="text-center text-slate-400 py-4">
+                  No se encontraron resultados
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
 
-      {/* Modal detalle */}
-      <CensoDetail
-        open={openDetail}
-        onClose={() => setOpenDetail(false)}
-        data={selectedRow}
-      />
+      <CensoDetail open={openDetail} onClose={() => setOpenDetail(false)} data={selectedRow} />
 
-      {/* Paginador */}
       <div className="flex flex-col md:flex-row justify-between items-center mt-4 space-y-2 md:space-y-0">
         <div className="flex items-center space-x-2">
-          <Button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((prev) => prev - 1)}
-            className="bg-slate-700 text-slate-300 hover:bg-slate-600"
-          >
+          <Button disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)} className="bg-slate-700 text-slate-300 hover:bg-slate-600">
             Anterior
           </Button>
-
-          {Array.from(
-            { length: endBlock - startBlock + 1 },
-            (_, i) => startBlock + i
-          ).map((block) => {
+          {Array.from({ length: endBlock - startBlock + 1 }, (_, i) => startBlock + i).map((block) => {
             const startRecord = (block - 1) * blockSize + 1;
             const endRecord = Math.min(block * blockSize, totalRecords);
             return (
@@ -271,16 +277,10 @@ export default function CensoTable({
               </Button>
             );
           })}
-
-          <Button
-            disabled={currentPage === totalBlocks}
-            onClick={() => setCurrentPage((prev) => prev + 1)}
-            className="bg-slate-700 text-slate-300 hover:bg-slate-600"
-          >
+          <Button disabled={currentPage === totalBlocks} onClick={() => setCurrentPage((p) => p + 1)} className="bg-slate-700 text-slate-300 hover:bg-slate-600">
             Siguiente
           </Button>
         </div>
-
         <div className="text-slate-300 text-sm">
           Mostrando {firstRecord}-{lastRecord} de {totalRecords} registros
         </div>

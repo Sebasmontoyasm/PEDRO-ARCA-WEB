@@ -10,7 +10,7 @@ const dbConfig = {
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  timezone: "+00:00",
+  timezone: process.env.DB_TIMEZONE || "-05:00",
   charset: "utf8mb4",
 }
 const pool = mysql.createPool(dbConfig)
@@ -104,13 +104,9 @@ export async function censoProcess(pAINID_CENSO: number) {
 
 export async function getTimeArcaExtraccion() {
   try {
-
-
     const timeAnaExtraccionQuery = `
-      SELECT DATE_FORMAT(DATE_SUB(fechainsert, INTERVAL 1 HOUR), '%d-%m-%Y %r') AS fechainsert
-      FROM Monitoreo_rpa
-      ORDER BY fechainsert ASC
-      LIMIT 1;
+      SELECT MAX(DATE_FORMAT(DATE_SUB(fechainsert, INTERVAL 1 HOUR), '%d-%m-%Y %r')) AS fechainsert
+      FROM Monitoreo_rpa;
     `
     const [timeAnaExtraccion] = await executeQuery(timeAnaExtraccionQuery) as any;
 
@@ -122,6 +118,20 @@ export async function getTimeArcaExtraccion() {
     return {
       timeAnaExtraccion: [],
     }
+  }
+}
+
+export async function reprocesarIngreso(ainid: number) {
+   try {
+    const userID = 1; // ID de usuario fijo para este ejemplo
+    console.log("Reprocesando ingreso con AINID:", ainid, "por usuario:", userID)
+    const censoReprocesar = `CALL SP_ARCA_REPROCESAR_WEB(?,?);`
+    const [rows] = (await executeQuery(censoReprocesar, [ainid,userID])) as any[]
+
+    return { Message: rows[0] || [] }
+  } catch (error) {
+    console.error("Error ejecutando SP_ARCA_REPROCESAR_WEB:", error)
+    return { Message: error}
   }
 }
 
