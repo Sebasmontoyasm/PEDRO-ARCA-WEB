@@ -17,10 +17,8 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!api) return;
-
     const interval = setInterval(() => {
       if (!api) return;
-      // Si está en el último slide, vuelve al primero
       if (api.canScrollNext()) {
         api.scrollNext();
       } else {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { LogIn } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,12 +14,47 @@ import {
 
 export default function NavBar() {
   const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Error al iniciar sesión");
+        return;
+      }
+
+      // ✅ Crear cookie de sesión (duración 2h)
+      document.cookie = `session_token=${data.token}; path=/; max-age=${2 * 60 * 60}; secure`;
+
+      // ✅ Redirigir al dashboard
+      setOpen(false);
+      router.push("/dashboard");
+    } catch (error) {
+      alert("Error de conexión con el servidor");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo + título */}
+          {/* LOGO + NOMBRE */}
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-yellow-500 flex items-center justify-center">
               <span className="text-slate-900 font-bold text-sm">C</span>
@@ -28,7 +64,7 @@ export default function NavBar() {
             </span>
           </div>
 
-          {/* Botón de login con modal */}
+          {/* BOTÓN Y MODAL LOGIN */}
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button
@@ -38,6 +74,7 @@ export default function NavBar() {
                 Iniciar sesión
               </Button>
             </DialogTrigger>
+
             <DialogContent className="bg-slate-900 text-white border border-slate-700">
               <DialogHeader>
                 <DialogTitle className="text-lg font-semibold text-yellow-500">
@@ -45,22 +82,30 @@ export default function NavBar() {
                 </DialogTitle>
               </DialogHeader>
 
-              <form className="flex flex-col gap-3 mt-4">
+              <form className="flex flex-col gap-3 mt-4" onSubmit={handleLogin}>
                 <input
                   type="email"
                   placeholder="Correo electrónico"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                   className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
                 />
                 <input
                   type="password"
                   placeholder="Contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                   className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
                 />
+
                 <Button
                   type="submit"
+                  disabled={loading}
                   className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-semibold mt-2"
                 >
-                  Entrar
+                  {loading ? "Entrando..." : "Entrar"}
                 </Button>
               </form>
             </DialogContent>
