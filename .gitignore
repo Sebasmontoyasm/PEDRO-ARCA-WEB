@@ -8,6 +8,9 @@
 /out/
 .vscode
 
+#Claves Temporales clientes
+app/api/hash2.js
+
 # production
 /build
 

@@ -5,9 +5,12 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'CLINICA DE FRACTURAS',
-  description: 'Dashboard clinica de fracturas',
+  title: 'Clínica de Fracturas',
+  description: 'Dashboard clÍnica de fracturas',
   generator: 'Solutions-Systems',
+   icons: {
+    icon: "favicon/bone.svg", // 👈 aquí el nuevo favicon
+  },
 }
 
 export default function RootLayout({

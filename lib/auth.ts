@@ -31,23 +31,19 @@ export async function LogIn(email: string, password: string) {
     );
 
     if (!rows || rows.length === 0) return null;
-
     const user = rows[0];
+
     const isMatch = await bcrypt.compare(password + user.salt, user.password_hash);
     if (!isMatch) return null;
 
-    // 🔐 JWT con duración de 2 horas
+    const secret = process.env.JWT_SECRET || "secret_key_dev";
     const jwtToken = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      process.env.JWT_SECRET || "secret_key_dev", // 👈 cambia esto en producción
+      { id: user.id, email: user.email, role: user.role },
+      secret,
       { expiresIn: "2h" }
     );
 
-    // 🔑 Token de sesión DB (opcional)
+    // Sesión en BD
     const dbToken = generateToken();
     const expires = new Date(Date.now() + 2 * 60 * 60 * 1000);
 
@@ -57,7 +53,6 @@ export async function LogIn(email: string, password: string) {
       [user.id, dbToken, expires]
     );
 
-    // 🕐 Actualizamos el último acceso
     await pool.query(
       `UPDATE user SET last_login = CURRENT_TIMESTAMP() WHERE id = ?`,
       [user.id]
