@@ -1,55 +1,61 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { DashboardHeader } from "@/components/dashboard-header"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useEffect, useState } from "react";
+import { DashboardHeader } from "@/components/dashboard-header";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   CalendarIcon,
   FilterIcon,
   SearchIcon,
-  FileTextIcon,
+  RotateCcwIcon,
   DownloadIcon,
-  RotateCcwIcon
-} from "lucide-react"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
-import { DateRange } from "react-day-picker"
+  FileTextIcon,
+} from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { DateRange } from "react-day-picker";
 
-import MetricsGrid from "@/components/metrics-grid"
-import CensoTable from "@/components/censo-table"
-import Footer from "@/components/footer"
-import { Ingreso } from "@/types/censo"
+import MetricsGrid from "@/components/metrics-grid";
+import CensoTable from "@/components/censo-table";
+import Footer from "@/components/footer";
+import { Ingreso } from "@/types/censo";
 
 export default function DashboardPage() {
-  const [dark] = useState(true)
-  const [data, setData] = useState<Ingreso[]>([])
+  const [dark] = useState(true);
 
-  const [filtroEstado, setFiltroEstado] = useState("todos")
-  const [busqueda, setBusqueda] = useState("")
-  const [filtroRangoIngreso, setFiltroRangoIngreso] = useState<DateRange | undefined>()
-  const [filtroRangoProcesado, setFiltroRangoProcesado] = useState<DateRange | undefined>()
-  const [estadosUnicos, setEstadosUnicos] = useState<string[]>([])
+  const [data, setData] = useState<Ingreso[]>([]);
+  const [filtroEstado, setFiltroEstado] = useState("todos");
+  const [busqueda, setBusqueda] = useState("");
+  const [filtroRangoIngreso, setFiltroRangoIngreso] = useState<DateRange | undefined>();
+  const [filtroRangoProcesado, setFiltroRangoProcesado] = useState<DateRange | undefined>();
+  const [estadosUnicos, setEstadosUnicos] = useState<string[]>([]);
 
   useEffect(() => {
-    if (dark) document.documentElement.classList.add("dark")
-    else document.documentElement.classList.remove("dark")
-  }, [dark])
+    if (dark) document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
+  }, [dark]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch("/api/dashboard/censo")
-        const json = await res.json()
+        const res = await fetch("/api/dashboard/censo");
+        const json = await res.json();
 
         const mapped: Ingreso[] = json.censo.map((item: any) => ({
           AINID: item.AINID,
           AINCONSEC: String(item.AINCONSEC),
           GPANOMCOM: item.GPANOMCOM,
-          AINFECING: item.AINFECING ? item.AINFECING : "-",
+          AINFECING: item.AINFECING || "-",
           PACNUMDOC: item.PACNUMDOC,
           OBSERVACION: item.OBSERVACION || "-",
           ESTADO: item.ESTADO,
@@ -59,28 +65,26 @@ export default function DashboardPage() {
             { label: "Totales", value: Number(item.TOTAL) || 0 },
           ],
           EXACTITUD: Number(item.EXACTITUD) || 0,
-          FECHAINSERT: item.FECHAINSERT ? item.FECHAINSERT : "-",
+          FECHAINSERT: item.FECHAINSERT || "-",
           TIMEPROCESS: item.TIMEPROCESS || "-",
-        }))
+        }));
 
-        setData(mapped)
-
-        const estados = Array.from(new Set(mapped.map(i => i.ESTADO)))
-        setEstadosUnicos(estados)
+        setData(mapped);
+        setEstadosUnicos(Array.from(new Set(mapped.map((i) => i.ESTADO))));
       } catch (err) {
-        console.error("Error cargando censo:", err)
+        console.error("Error cargando censo:", err);
       }
-    }
+    };
 
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   const handleResetFiltros = () => {
-    setFiltroEstado("todos")
-    setBusqueda("")
-    setFiltroRangoIngreso(undefined)
-    setFiltroRangoProcesado(undefined)
-  }
+    setFiltroEstado("todos");
+    setBusqueda("");
+    setFiltroRangoIngreso(undefined);
+    setFiltroRangoProcesado(undefined);
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
@@ -106,6 +110,7 @@ export default function DashboardPage() {
           </Button>
         </div>
 
+        {/* Métricas */}
         <MetricsGrid />
 
         {/* Filtros */}
@@ -122,9 +127,6 @@ export default function DashboardPage() {
             >
               <RotateCcwIcon className="h-5 w-5" />
             </Button>
-
-
-
           </div>
 
           <p className="text-slate-400 mb-4">
@@ -248,8 +250,9 @@ export default function DashboardPage() {
           filtroRangoIngreso={filtroRangoIngreso}
           filtroRangoProcesado={filtroRangoProcesado}
         />
+
         <Footer />
       </main>
     </div>
-  )
+  );
 }

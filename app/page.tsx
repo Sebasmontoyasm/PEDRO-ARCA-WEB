@@ -17,10 +17,8 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!api) return;
-
     const interval = setInterval(() => {
       if (!api) return;
-      // Si está en el último slide, vuelve al primero
       if (api.canScrollNext()) {
         api.scrollNext();
       } else {
@@ -60,6 +58,13 @@ export default function HomePage() {
                 <img
                   src="/carousel/2.png"
                   alt="Proveedor de servicios"
+                  className="w-full h-[400px] md:h-[500px] object-cover rounded-xl border border-slate-800 shadow-lg"
+                />
+              </CarouselItem>
+              <CarouselItem>
+                <img
+                  src="/carousel/3.png"
+                  alt="Gaby Rpa"
                   className="w-full h-[400px] md:h-[500px] object-cover rounded-xl border border-slate-800 shadow-lg"
                 />
               </CarouselItem>

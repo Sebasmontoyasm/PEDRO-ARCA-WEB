@@ -7,13 +7,16 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Bell, Settings, ChevronDown, Calendar, Sun, Moon } from "lucide-react"
+import { Bell, Settings, ChevronDown, Calendar, LogOut, Users } from "lucide-react"
 
 export function DashboardHeader() {
   const [dark, setDark] = useState(false)
-  const [fechaExtraccion, setFecha] = useState<string | null>(null) // Estado para la fecha
+  const [fechaExtraccion, setFecha] = useState<string | null>(null)
+  const [role, setRol] = useState<number | null>(null)
 
   useEffect(() => {
     if (dark) {
@@ -26,28 +29,61 @@ export function DashboardHeader() {
   useEffect(() => {
     async function fetchFechaAnaExtraccion() {
       try {
-        const res = await fetch('/api/rpa/extraccion')  // Ajusta la ruta a tu endpoint real
+        const res = await fetch("/api/rpa/extraccion")
         const data = await res.json()
-        setFecha(data.timeAnaExtraccion.fechainsert) // Ajusta según la estructura real que recibas
+        setFecha(data.timeAnaExtraccion.fechainsert)
       } catch (error) {
         console.error(error)
         setFecha(null)
       }
     }
 
+    async function fetchUserRole() {
+      try {
+        const res = await fetch("/api/auth/me")
+        const data = await res.json()
+
+        setRol(data.user?.role || data.user?.role || null)
+      } catch (error) {
+        console.error(error)
+        setRol(null)
+      }
+    }
+
     fetchFechaAnaExtraccion()
+    fetchUserRole()
   }, [])
+
+ // cliente: handleLogout (ejecutar en navegador)
+async function handleLogout() {
+  try {
+    // Llamada al endpoint que borra la cookie HttpOnly
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch (err) {
+    console.error("Error cerrando sesión en servidor:", err);
+  } finally {
+    localStorage.removeItem("user_name");
+    localStorage.setItem("logout-event", Date.now().toString());
+    window.location.href = "/";
+  }
+}
+
 
   return (
     <header className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
+          {/* --- Izquierda --- */}
           <div className="flex items-center gap-6">
+            {/* Logo homogeneo */}
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">C</span>
+              <div className="h-8 w-8 rounded-lg bg-slate-700 flex items-center justify-center shadow-md">
+                <span className="text-white font-bold text-sm tracking-tight">C</span>
               </div>
-              <span className="font-semibold text-lg">CLINICA DE FRACTURAS</span>
+              <span className="font-semibold text-lg">Clínica de Fracturas</span>
             </div>
 
             <nav className="hidden md:flex items-center gap-6">
@@ -57,31 +93,13 @@ export function DashboardHeader() {
               >
                 Resumen
               </a>
-              <a
-                href="#"
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                Análisis
-              </a>
-              <a
-                href="#"
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                Reportes
-              </a>
-              <a
-                href="#"
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                Configuración
-              </a>
             </nav>
           </div>
 
+          {/* --- Derecha --- */}
           <div className="flex items-center gap-4">
-            {/* Aquí la etiqueta fecha antes del dropdown */}
             {fechaExtraccion ? (
-              <span className="text-sm font-semibold text-while select-none">
+              <span className="text-sm font-semibold text-white select-none">
                 Última actualización el {fechaExtraccion}
               </span>
             ) : (
@@ -90,6 +108,7 @@ export function DashboardHeader() {
               </span>
             )}
 
+            {/* Filtro de tiempo */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -121,9 +140,34 @@ export function DashboardHeader() {
               <Bell className="h-4 w-4" />
             </Button>
 
-            <Button variant="ghost" size="sm">
-              <Settings className="h-4 w-4" />
-            </Button>
+            {/* Menú de configuración */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuLabel>Configuración</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+
+                {(role === 4 || role === 2) && (
+                  <DropdownMenuItem asChild>
+                    <a href="/admin/user" className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Usuarios
+                    </a>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-primary hover:text-primary"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Cerrar sesión
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
