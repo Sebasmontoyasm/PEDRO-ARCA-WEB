@@ -84,24 +84,6 @@ export function DashboardHeader() {
               >
                 Resumen
               </a>
-              <a
-                href="#"
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                Análisis
-              </a>
-              <a
-                href="#"
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                Reportes
-              </a>
-              <a
-                href="#"
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                Configuración
-              </a>
             </nav>
           </div>
 
@@ -160,9 +142,9 @@ export function DashboardHeader() {
                 <DropdownMenuLabel>Configuración</DropdownMenuLabel>
                 <DropdownMenuSeparator />
 
-                {role === 4 && (
+                {(role === 4 || role === 2) && (
                   <DropdownMenuItem asChild>
-                    <a href="/admin/usuarios" className="flex items-center gap-2">
+                    <a href="/admin/user" className="flex items-center gap-2">
                       <Users className="h-4 w-4" />
                       Usuarios
                     </a>

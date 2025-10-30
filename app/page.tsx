@@ -61,6 +61,13 @@ export default function HomePage() {
                   className="w-full h-[400px] md:h-[500px] object-cover rounded-xl border border-slate-800 shadow-lg"
                 />
               </CarouselItem>
+              <CarouselItem>
+                <img
+                  src="/carousel/3.png"
+                  alt="Gaby Rpa"
+                  className="w-full h-[400px] md:h-[500px] object-cover rounded-xl border border-slate-800 shadow-lg"
+                />
+              </CarouselItem>
             </CarouselContent>
 
             <CarouselPrevious className="border-slate-600 text-slate-300 hover:bg-slate-700" />

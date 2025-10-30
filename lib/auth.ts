@@ -1,27 +1,12 @@
 import bcrypt from "bcryptjs";
 import { RowDataPacket } from "mysql2";
-import mysql from "mysql2/promise";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
+import pool from "./database";
 
-export function generateToken() {
+export function generateToken(): string {
   return crypto.randomBytes(32).toString("hex");
 }
-
-const dbConfig = {
-  host: process.env.DB_HOST || "localhost",
-  port: Number.parseInt(process.env.DB_PORT || "3306"),
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  timezone: process.env.DB_TIMEZONE || "-05:00",
-  charset: "utf8mb4",
-};
-
-const pool = mysql.createPool(dbConfig);
 
 export async function LogIn(email: string, password: string) {
   try {
@@ -38,25 +23,21 @@ export async function LogIn(email: string, password: string) {
 
     const secret = process.env.JWT_SECRET || "secret_key_dev";
     const jwtToken = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      { id: user.id, name: user.name, email: user.email, role: user.role },
       secret,
       { expiresIn: "2h" }
     );
 
-    // Sesión en BD
     const dbToken = generateToken();
-    const expires = new Date(Date.now() + 2 * 60 * 60 * 1000);
+    const expires = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
 
     await pool.query(
-      `INSERT INTO user_session (user_id, token, last_activity, created_at, expired_at)
-       VALUES (?, ?, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP(), ?)`,
+      `INSERT INTO user_session (user_id, token, last_activity, expired_at, created_at)
+       VALUES (?, ?, CURRENT_TIMESTAMP(), ?, CURRENT_TIMESTAMP())`,
       [user.id, dbToken, expires]
     );
 
-    await pool.query(
-      `UPDATE user SET last_login = CURRENT_TIMESTAMP() WHERE id = ?`,
-      [user.id]
-    );
+    await pool.query(`UPDATE user SET last_login = CURRENT_TIMESTAMP() WHERE id = ?`, [user.id]);
 
     return {
       id: user.id,
@@ -64,6 +45,8 @@ export async function LogIn(email: string, password: string) {
       email: user.email,
       role: user.role,
       jwt: jwtToken,
+      sessionToken: dbToken,
+      expiresAt: expires,
     };
   } catch (error) {
     console.error("Error en LogIn:", error);

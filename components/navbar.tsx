@@ -30,7 +30,6 @@ export default function NavBar() {
   const [user, setUser] = useState<{ name: string; role: number } | null>(null);
   const router = useRouter();
 
-  // Verificar sesión al cargar
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -154,7 +153,7 @@ export default function NavBar() {
 
                 {user.role === 4 && (
                   <DropdownMenuItem asChild>
-                    <a href="/admin/usuarios" className="flex items-center gap-2">
+                    <a href="/admin/user" className="flex items-center gap-2">
                       <Users className="w-4 h-4" />
                       Usuarios
                     </a>
