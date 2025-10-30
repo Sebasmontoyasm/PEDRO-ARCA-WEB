@@ -1,16 +1,23 @@
-"use client"
+"use client";
 
-import { useToast } from "@/hooks/use-toast"
+import React from "react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Toast,
-  ToastClose,
-  ToastDescription,
   ToastTitle,
+  ToastDescription,
+  ToastClose,
   ToastViewport,
-} from "@/components/ui/toast"
+} from "@/components/ui/toast";
 
 export function Toaster() {
-  const { toasts, dismiss } = useToast()
+  const { toasts, dismiss } = useToast();
+
+  // ⏱ Auto dismiss a los 4 s
+  React.useEffect(() => {
+    const timers = toasts.map((t) => setTimeout(() => dismiss(t.id), 4000));
+    return () => timers.forEach(clearTimeout);
+  }, [toasts, dismiss]);
 
   return (
     <>
@@ -18,12 +25,9 @@ export function Toaster() {
         <Toast
           key={id}
           variant={variant}
-          onOpenChange={() => dismiss(id)}
           className={`${
-            variant === "destructive"
-              ? "bg-red-600 text-white"
-              : "bg-green-600 text-white"
-          }`}
+            variant === "destructive" ? "bg-red-600" : "bg-slate-800"
+          } text-white border-none shadow-lg rounded-xl`}
         >
           <div className="grid gap-1">
             {title && <ToastTitle>{title}</ToastTitle>}
@@ -34,5 +38,5 @@ export function Toaster() {
       ))}
       <ToastViewport />
     </>
-  )
+  );
 }

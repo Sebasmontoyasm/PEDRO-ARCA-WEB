@@ -104,14 +104,19 @@ export default function UsuariosPage() {
 
       setUsers(formattedUsers);
       setRoles(data.roles || []);
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      let msg = error.message || "No se pudo guardar el usuario";
+      if (msg.includes("duplicate") || msg.includes("correo")) {
+        msg = "El correo electrónico ya está registrado.";
+      }
+
       toast({
-        title: "Error",
-        description: "No se pudieron cargar los usuarios",
+        title: "⚠️ Error",
+        description: msg,
         variant: "destructive",
       });
-    } finally {
+    }
+    finally {
       setLoading(false);
     }
   };
@@ -120,51 +125,63 @@ export default function UsuariosPage() {
     fetchUsers();
   }, []);
 
- const handleSave = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
 
-  try {
-    const method = editingUser ? "PUT" : "POST";
-    const url = editingUser
-      ? `/api/admin/user/${editingUser.id}`
-      : "/api/admin/user";
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(form),
-    });
+    try {
+      const method = editingUser ? "PUT" : "POST";
+      const url = editingUser ? `/api/admin/user/${editingUser.id}` : "/api/admin/user";
 
-    const data = await res.json();
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(form),
+      });
 
-    if (!res.ok) {
-      throw new Error(data.error || "Error al guardar usuario");
+      const data = await res.json();
+
+      if (!res.ok || data.success === false) {
+        let msg = data.error || "Error al guardar usuario";
+        if (
+          msg.toString().toLowerCase().includes("duplicate") ||
+          msg.toString().toLowerCase().includes("correo") ||
+          msg.toString().toLowerCase().includes("ya está registrado")
+        ) {
+          msg = "El correo electrónico ya está registrado.";
+        }
+
+        toast({
+          title: "⚠️ Error",
+          description: msg,
+          variant: "destructive"
+        });
+
+        throw new Error(msg);
+      }
+
+      toast({
+        title: "✅ Éxito",
+        description: editingUser ? "Usuario actualizado correctamente" : "Usuario creado correctamente",
+        variant: "default"
+      });
+
+      setOpen(false);
+      setEditingUser(null);
+      setForm({ name: "", email: "", password: "", role: 1 });
+      fetchUsers();
+    } catch (error: any) {
+      toast({
+        title: "⚠️ Error",
+        description: error?.message || "No se pudo guardar el usuario",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-
-    toast({
-      title: "✅ Éxito",
-      description: editingUser
-        ? "Usuario actualizado correctamente"
-        : "Usuario creado correctamente",
-    });
-
-    setOpen(false);
-    setEditingUser(null);
-    setForm({ name: "", email: "", password: "", role: 1 });
-    fetchUsers();
-
-  } catch (error: any) {
-    toast({
-      title: "⚠️ Error",
-      description: error.message || "No se pudo guardar el usuario",
-      variant: "destructive",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
   const handleDelete = async (id: number) => {
@@ -266,7 +283,7 @@ export default function UsuariosPage() {
                 {/* 🔑 Contraseña */}
                 <div className="flex flex-col gap-2">
                   <label htmlFor="password" className="text-sm font-medium text-gray-300">
-                    Contraseña <span className="text-red-500">*</span>
+                    Contraseña {editingUser ? "" : <span className="text-red-500">*</span>}
                   </label>
                   <Input
                     id="password"
@@ -275,7 +292,7 @@ export default function UsuariosPage() {
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
                     className="bg-slate-800 border border-slate-700 text-white focus:ring-2 focus:ring-yellow-500 rounded-xl"
-                    required
+                    required={!editingUser}
                   />
                 </div>
 

@@ -18,17 +18,20 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const result = await createUser(body);
-
-    if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 400 });
+    return NextResponse.json(result);
+  } catch (err: any) {
+    // 🧠 Manejo específico de duplicados
+    if (err.code === "ER_DUP_ENTRY") {
+      return NextResponse.json(
+        { error: "El correo electrónico ya está registrado." },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json(result);
-  } catch (error: any) {
-    console.error("Error creando usuario:", error);
+    // 🧱 Manejo general
     return NextResponse.json(
-      { error: error.message || "Error al crear usuario" },
-      { status: 500 }
+      { error: err.message || "Error en el servidor" },
+      { status: 400 }
     );
   }
 }

@@ -103,7 +103,7 @@ export async function censoProcess(pAINID_CENSO: number) {
 export async function getTimeArcaExtraccion() {
   try {
     const timeAnaExtraccionQuery = `
-      SELECT DATE_FORMAT(MAX(fechainsert), '%d-%m-%Y %r') AS fechainsert
+      SELECT DATE_FORMAT(DATE_SUB(MAX(fechainsert), INTERVAL 1 HOUR), '%d-%m-%Y %r') AS fechainsert
       FROM Monitoreo_rpa;
     `
     const [timeAnaExtraccion] = (await executeQuery(timeAnaExtraccionQuery)) as any
@@ -127,9 +127,6 @@ export async function reprocesarIngreso(ainid: number) {
   }
 }
 
-// ============================================================
-// 👥 Funciones de usuarios y roles
-// ============================================================
 export async function getUsers() {
   try {
     const SQL = `CALL SP_ARCA_USER();`
@@ -152,7 +149,6 @@ export async function getUsersRoles() {
   }
 }
 
-// ✅ Usuarios + Roles combinados
 export async function getAllUsersAndRoles() {
   const users = await executeQuery(`CALL SP_ARCA_USER();`)
   const roles = await executeQuery(`SELECT * FROM role;`)
@@ -212,7 +208,8 @@ export async function updateUser({
   let SQL: string;
   let params: any[];
 
-  if (password) {
+  if (password && password.trim() !== "") {
+    // 🔐 Nuevo hash solo si se envió una contraseña
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password + salt, 10);
 
@@ -223,6 +220,7 @@ export async function updateUser({
     `;
     params = [name, email, password_hash, salt, role, id];
   } else {
+    // ✏️ Actualizar solo datos básicos
     SQL = `
       UPDATE user
       SET name = ?, email = ?, role = ?
@@ -235,6 +233,7 @@ export async function updateUser({
 
   return { message: "Usuario actualizado correctamente" };
 }
+
 
 export async function deleteUser(id: number) {
   if (!id) throw new Error("Falta el ID del usuario")

@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
-import { updateUser, deleteUser } from "@/lib/database"; 
+import { updateUser, deleteUser } from "@/lib/database";
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
     const id = Number(params.id);
     const { name, email, password, role } = await req.json();
 
-    // Validación mínima
     if (!id || !name || !email || !role) {
       return NextResponse.json({ error: "Datos incompletos" }, { status: 400 });
     }
 
-    await updateUser({id, name, email, role });
+    await updateUser({ id, name, email, password, role });
 
     return NextResponse.json({ message: "Usuario actualizado correctamente" });
   } catch (error) {
@@ -20,7 +19,6 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-// ❌ Eliminar usuario
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   try {
     const id = Number(params.id);
@@ -31,8 +29,11 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     await deleteUser(id);
 
     return NextResponse.json({ message: "Usuario eliminado correctamente" });
-  } catch (error) {
-    console.error("Error al eliminar usuario:", error);
-    return NextResponse.json({ error: "Error al eliminar usuario" }, { status: 500 });
+  } catch (err: any) {
+    if (err.code === "ER_DUP_ENTRY") {
+      return NextResponse.json({ error: "El correo electrónico ya está registrado." }, { status: 400 });
+    }
+    return NextResponse.json({ error: err.message }, { status: 400 });
   }
+
 }
