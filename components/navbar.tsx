@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { LogIn, LogOut, LayoutDashboard, Eye, EyeOff, Settings, Users } from "lucide-react";
+import {
+  LogIn,
+  LogOut,
+  LayoutDashboard,
+  Eye,
+  EyeOff,
+  Settings,
+  Users,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import {
@@ -11,7 +19,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog2";
-
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -20,6 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { Toaster, toast } from "sonner";
 
 export default function NavBar() {
   const [open, setOpen] = useState(false);
@@ -30,6 +38,7 @@ export default function NavBar() {
   const [user, setUser] = useState<{ name: string; role: number } | null>(null);
   const router = useRouter();
 
+  // ✅ Verificar sesión activa
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -39,7 +48,11 @@ export default function NavBar() {
         });
         if (!res.ok) throw new Error("No autorizado");
         const data = await res.json();
-        setUser(data.user);
+
+        if (data.user) {
+          const firstName = data.user.name?.split(" ")[0];
+          setUser({ name: firstName, role: data.user.role });
+        }
       } catch {
         setUser(null);
       }
@@ -47,10 +60,11 @@ export default function NavBar() {
     checkSession();
   }, []);
 
-  // Login
+  // ✅ Login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -60,33 +74,52 @@ export default function NavBar() {
       });
 
       const data = await res.json();
-      console.log("Login response:", data);
 
-      if (data.jwt) {
-        // Guardar cookie
-        document.cookie = `auth_token=${data.jwt}; path=/; max-age=7200; SameSite=Strict${process.env.NODE_ENV === "production" ? "; Secure" : ""
-          }`;
+      if (res.ok && data.user) {
+        const { name, role } = data.user;
+        const firstName = name?.split(" ")[0] || "Usuario";
 
-        localStorage.setItem("user_name", data.name.split(" ")[0]);
-        setUser({ name: data.name.split(" ")[0], role: data.role });
+        localStorage.setItem("user_name", firstName);
+        setUser({ name: firstName, role });
 
-        setOpen(false); // cerrar diálogo
+        toast.success(`Bienvenido, ${firstName}!`, {
+          description: "Autenticación exitosa.",
+          style: {
+            background: "#0f172a",
+            color: "#fff",
+            border: "1px solid #334155",
+          },
+        });
+
+        setOpen(false);
         setEmail("");
         setPassword("");
-        alert("Redirigiendo al dashboard...");
-        router.push("/dashboard");
+        setTimeout(() => router.push("/dashboard"), 800);
       } else {
-        alert(data.message || "Credenciales incorrectas");
+        toast.error(data.error || "Credenciales incorrectas", {
+          description: "Verifica tu correo y contraseña.",
+          style: {
+            background: "#0f172a",
+            color: "#fff",
+            border: "1px solid #334155",
+          },
+        });
       }
-    } catch (err) {
-      console.error("Error de conexión:", err);
-      alert("Error de conexión");
+    } catch {
+      toast.error("Error de conexión con el servidor", {
+        description: "Intenta nuevamente más tarde.",
+        style: {
+          background: "#0f172a",
+          color: "#fff",
+          border: "1px solid #334155",
+        },
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // Logout
+  // ✅ Logout
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
@@ -107,17 +140,17 @@ export default function NavBar() {
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
         {/* Logo + Dashboard */}
         <div className="flex items-center gap-5">
-          {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-slate-700 flex items-center justify-center shadow-md">
                 <span className="text-white font-bold text-sm tracking-tight">C</span>
               </div>
-              <span className="font-semibold text-lg text-white">Clínica de Fracturas</span>
+              <span className="font-semibold text-lg text-white">
+                Clínica de Fracturas
+              </span>
             </div>
           </div>
 
-          {/* Botón Dashboard */}
           {user && (
             <button
               onClick={() => router.push("/dashboard")}
@@ -136,7 +169,6 @@ export default function NavBar() {
               Hola, <span className="text-yellow-400 font-medium">{user.name}</span>
             </span>
 
-            {/* Menú de configuración */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
@@ -160,7 +192,10 @@ export default function NavBar() {
                   </DropdownMenuItem>
                 )}
 
-                <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="flex items-center gap-2"
+                >
                   <LogOut className="w-4 h-4" />
                   Cerrar sesión
                 </DropdownMenuItem>
@@ -193,7 +228,6 @@ export default function NavBar() {
                   className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
                 />
 
-                {/* Contraseña con icono ojo */}
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -208,7 +242,11 @@ export default function NavBar() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-yellow-400"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
 
@@ -220,6 +258,18 @@ export default function NavBar() {
                   {loading ? "Entrando..." : "Entrar"}
                 </Button>
               </form>
+
+              {/* Toast oscuro abajo del modal */}
+              <Toaster
+                position="bottom-center"
+                toastOptions={{
+                  style: {
+                    background: "#0f172a",
+                    color: "#fff",
+                    border: "1px solid #334155",
+                  },
+                }}
+              />
             </DialogContent>
           </Dialog>
         )}
