@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server"
 
 export function middleware(req: NextRequest) {
   const origin = req.headers.get("origin")
-  const allowedOrigins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+  const allowedOrigins = ["http://localhost", "http://127.0.0.1"]
 
   if (origin && allowedOrigins.includes(origin)) {
     const res = NextResponse.next()
