@@ -130,6 +130,7 @@ export default function NavBar() {
         "auth_token=; Path=/; Max-Age=0; SameSite=Strict" +
         (process.env.NODE_ENV === "production" ? "; Secure" : "");
       localStorage.removeItem("user_name");
+      localStorage.removeItem("logout-event");
       setUser(null);
       router.push("/");
     }

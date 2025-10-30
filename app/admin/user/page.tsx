@@ -21,27 +21,39 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Edit, Trash2, Plus } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
-function UserRow({ user, onEdit, onDelete }: { user: User; onEdit: (u: User) => void; onDelete: (id: number) => void }) {
+function UserRow({
+  user,
+  onEdit,
+  onDelete,
+}: {
+  user: User;
+  onEdit: (u: User) => void;
+  onDelete: (id: number) => void;
+}) {
   const formatDate = (date: Date | null) => (date ? date.toLocaleString() : "-");
 
   return (
-    <TableRow className="hover:bg-slate-800 transition-colors" key={user.id}>
-      <TableCell className="text-gray-300 max-w-[150px] whitespace-pre-line break-words">{user.name}</TableCell>
-      <TableCell className="text-gray-300 max-w-[200px] whitespace-pre-line break-words">{user.email}</TableCell>
+    <TableRow className="hover:bg-slate-800/80 transition-colors duration-200" key={user.id}>
+      <TableCell className="text-gray-300 max-w-[150px] whitespace-pre-line break-words">
+        {user.name}
+      </TableCell>
+      <TableCell className="text-gray-300 max-w-[200px] whitespace-pre-line break-words">
+        {user.email}
+      </TableCell>
       <TableCell className="text-gray-300 text-center">{user.rol}</TableCell>
-      <TableCell className="text-gray-300 max-w-[150px] whitespace-pre-line">{formatDate(user.last_login)}</TableCell>
-      <TableCell className="text-gray-300 max-w-[150px] whitespace-pre-line">{formatDate(user.sesion)}</TableCell>
-      <TableCell className="text-gray-300 max-w-[150px] whitespace-pre-line">{formatDate(user.expired_at)}</TableCell>
-      <TableCell className="text-gray-300 max-w-[150px] whitespace-pre-line">{formatDate(user.created)}</TableCell>
+      <TableCell className="text-gray-300 text-center">{formatDate(user.last_login)}</TableCell>
+      <TableCell className="text-gray-300 text-center">{formatDate(user.sesion)}</TableCell>
+      <TableCell className="text-gray-300 text-center">{formatDate(user.expired_at)}</TableCell>
+      <TableCell className="text-gray-300 text-center">{formatDate(user.created)}</TableCell>
       <TableCell className="text-right">
         <div className="flex justify-end gap-3">
           <Button
             size="icon"
             variant="ghost"
             onClick={() => onEdit(user)}
-            className="text-yellow-400 hover:text-yellow-300 transition-colors"
+            className="text-yellow-400 hover:text-yellow-300 hover:scale-110 transition-transform"
           >
             <Edit className="w-4 h-4" />
           </Button>
@@ -49,7 +61,7 @@ function UserRow({ user, onEdit, onDelete }: { user: User; onEdit: (u: User) => 
             size="icon"
             variant="ghost"
             onClick={() => onDelete(user.id)}
-            className="text-red-500 hover:text-red-400 transition-colors"
+            className="text-red-500 hover:text-red-400 hover:scale-110 transition-transform"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -59,12 +71,13 @@ function UserRow({ user, onEdit, onDelete }: { user: User; onEdit: (u: User) => 
   );
 }
 
-// Componente principal de la página de usuarios
+// 🧭 Página de gestión de usuarios
 export default function UsuariosPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Rol[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const { toast } = useToast();
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [form, setForm] = useState({
     name: "",
@@ -73,14 +86,12 @@ export default function UsuariosPage() {
     role: 1,
   });
 
-  // Cargar usuarios y roles desde el backend
+  // 🚀 Cargar usuarios y roles
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/admin/user", { credentials: "include" });
       const data = await res.json();
-      
-      console.log("Fetched users data:", data);
 
       const formattedUsers: User[] = (data.users || []).map((u: any) => ({
         ...u,
@@ -109,42 +120,53 @@ export default function UsuariosPage() {
     fetchUsers();
   }, []);
 
-  // Guardar o actualizar usuario
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const method = editingUser ? "PUT" : "POST";
-      const url = editingUser ? `/api/admin/user/${editingUser.id}` : "/api/admin/user";
+ const handleSave = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
 
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(form),
-      });
+  try {
+    const method = editingUser ? "PUT" : "POST";
+    const url = editingUser
+      ? `/api/admin/user/${editingUser.id}`
+      : "/api/admin/user";
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al guardar usuario");
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(form),
+    });
 
-      toast({
-        title: "Éxito",
-        description: editingUser ? "Usuario actualizado" : "Usuario creado",
-      });
+    const data = await res.json();
 
-      setOpen(false);
-      setEditingUser(null);
-      setForm({ name: "", email: "", password: "", role: 1 });
-      fetchUsers();
-    } catch (error) {
-      console.error(error);
-      toast({ title: "Error", description: String(error), variant: "destructive" });
-    } finally {
-      setLoading(false);
+    if (!res.ok) {
+      throw new Error(data.error || "Error al guardar usuario");
     }
-  };
 
-  // Eliminar usuario
+    toast({
+      title: "✅ Éxito",
+      description: editingUser
+        ? "Usuario actualizado correctamente"
+        : "Usuario creado correctamente",
+    });
+
+    setOpen(false);
+    setEditingUser(null);
+    setForm({ name: "", email: "", password: "", role: 1 });
+    fetchUsers();
+
+  } catch (error: any) {
+    toast({
+      title: "⚠️ Error",
+      description: error.message || "No se pudo guardar el usuario",
+      variant: "destructive",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+
   const handleDelete = async (id: number) => {
     if (!confirm("¿Eliminar este usuario?")) return;
     setLoading(true);
@@ -165,7 +187,7 @@ export default function UsuariosPage() {
     }
   };
 
-  // Editar usuario
+  // ✏️ Editar usuario
   const handleEdit = (u: User) => {
     setEditingUser(u);
     setForm({ name: u.name, email: u.email, password: "", role: u.role });
@@ -175,69 +197,122 @@ export default function UsuariosPage() {
   return (
     <>
       <Navbar />
-      <div className="p-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-white">Gestión de Usuarios</h1>
-          <Dialog open={open} onOpenChange={setOpen}>
+      <div className="p-8 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 min-h-screen transition-colors">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-white tracking-tight drop-shadow-lg">
+            Gestión de Usuarios
+          </h1>
+          <Dialog
+            open={open}
+            onOpenChange={(state) => {
+              setOpen(state);
+              if (!state) {
+                setEditingUser(null);
+                setForm({ name: "", email: "", password: "", role: 1 });
+              }
+            }}
+          >
             <DialogTrigger asChild>
-              <Button className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 shadow-md transition-all">
+              <Button
+                className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 shadow-lg shadow-yellow-500/30 font-semibold transition-all duration-300 hover:scale-105"
+                onClick={() => {
+                  setEditingUser(null);
+                  setForm({ name: "", email: "", password: "", role: 1 });
+                  setOpen(true);
+                }}
+              >
                 <Plus className="w-4 h-4 mr-2" /> Nuevo Usuario
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-slate-900 text-white border border-slate-700">
+
+            <DialogContent className="bg-slate-900/95 border border-slate-700 shadow-xl shadow-slate-800/50 rounded-2xl">
               <DialogHeader>
-                <DialogTitle>{editingUser ? "Editar Usuario" : "Crear Usuario"}</DialogTitle>
+                <DialogTitle className="text-white text-xl font-semibold">
+                  {editingUser ? "Editar Usuario" : "Crear Usuario"}
+                </DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSave} className="flex flex-col gap-3 mt-4">
-                <Input
-                  placeholder="Nombre"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="bg-slate-800 border border-slate-700 text-white focus:ring-2 focus:ring-yellow-500"
-                  required
-                />
-                <Input
-                  placeholder="Correo electrónico"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="bg-slate-800 border border-slate-700 text-white focus:ring-2 focus:ring-yellow-500 whitespace-pre-line break-words"
-                  required
-                />
-                {!editingUser && (
+              <form onSubmit={handleSave} className="flex flex-col gap-4 mt-4">
+                {/* 🧍‍♂️ Usuario */}
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="name" className="text-sm font-medium text-gray-300">
+                    Usuario <span className="text-red-500">*</span>
+                  </label>
                   <Input
+                    id="name"
+                    placeholder="Nombre del usuario"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    className="bg-slate-800 border border-slate-700 text-white focus:ring-2 focus:ring-yellow-500 rounded-xl"
+                    required
+                  />
+                </div>
+
+                {/* 📧 Correo */}
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="email" className="text-sm font-medium text-gray-300">
+                    Correo <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id="email"
+                    placeholder="Correo electrónico"
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    className="bg-slate-800 border border-slate-700 text-white focus:ring-2 focus:ring-yellow-500 rounded-xl"
+                    required
+                  />
+                </div>
+
+                {/* 🔑 Contraseña */}
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="password" className="text-sm font-medium text-gray-300">
+                    Contraseña <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id="password"
                     placeholder="Contraseña"
                     type="password"
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    className="bg-slate-800 border border-slate-700 text-white focus:ring-2 focus:ring-yellow-500"
+                    className="bg-slate-800 border border-slate-700 text-white focus:ring-2 focus:ring-yellow-500 rounded-xl"
                     required
                   />
-                )}
-                <select
-                  value={form.role}
-                  onChange={(e) => setForm({ ...form, role: Number(e.target.value) })}
-                  className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-yellow-500"
-                >
-                  {roles.map((r: Rol) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
+                </div>
+
+                {/* 🧩 Rol */}
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="role" className="text-sm font-medium text-gray-300">
+                    Rol <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="role"
+                    value={form.role}
+                    onChange={(e) => setForm({ ...form, role: Number(e.target.value) })}
+                    className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:ring-2 focus:ring-yellow-500"
+                    required
+                  >
+                    <option value="">Seleccione un rol</option>
+                    {roles.map((r: Rol) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <Button
                   type="submit"
-                  className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-semibold mt-2 shadow-md transition-all"
+                  className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-semibold mt-2 shadow-lg shadow-yellow-500/30 hover:scale-105 transition-transform rounded-xl"
                   disabled={loading}
                 >
                   {editingUser ? "Guardar cambios" : "Crear"}
                 </Button>
               </form>
+
             </DialogContent>
           </Dialog>
         </div>
 
-        <div className="bg-slate-900 border border-slate-700 rounded-lg shadow-md overflow-hidden">
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-lg shadow-slate-900/40 overflow-hidden backdrop-blur-sm">
           <Table>
             <TableHeader>
               <TableRow>
@@ -266,7 +341,9 @@ export default function UsuariosPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                users.map((u) => <UserRow key={u.id} user={u} onEdit={handleEdit} onDelete={handleDelete} />)
+                users.map((u) => (
+                  <UserRow key={u.id} user={u} onEdit={handleEdit} onDelete={handleDelete} />
+                ))
               )}
             </TableBody>
           </Table>

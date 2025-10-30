@@ -42,7 +42,7 @@ export function DashboardHeader() {
       try {
         const res = await fetch("/api/auth/me")
         const data = await res.json()
-        // Asegurarse de usar la propiedad correcta
+
         setRol(data.user?.role || data.user?.role || null)
       } catch (error) {
         console.error(error)
@@ -54,14 +54,23 @@ export function DashboardHeader() {
     fetchUserRole()
   }, [])
 
-  const handleLogout = async () => {
-    try {
-      await fetch("/api/auth/logout", { method: "POST" })
-      window.location.href = "/"
-    } catch (error) {
-      console.error("Error cerrando sesión", error)
-    }
+ // cliente: handleLogout (ejecutar en navegador)
+async function handleLogout() {
+  try {
+    // Llamada al endpoint que borra la cookie HttpOnly
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch (err) {
+    console.error("Error cerrando sesión en servidor:", err);
+  } finally {
+    localStorage.removeItem("user_name");
+    localStorage.setItem("logout-event", Date.now().toString());
+    window.location.href = "/";
   }
+}
+
 
   return (
     <header className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">

@@ -59,6 +59,25 @@ export default function CensoTable({
   const [openDetail, setOpenDetail] = useState(false);
   const [selectedRow, setSelectedRow] = useState<Ingreso | null>(null);
   const [loadingId, setLoadingId] = useState<number | null>(null);
+  const [userRole, setUserRole] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "include" });
+        if (!res.ok) throw new Error("No se pudo obtener la sesión");
+
+        const session = await res.json();
+        if (session?.user?.role) {
+          setUserRole(session.user.role);
+        }
+      } catch (error) {
+        console.error("Error al obtener el rol del usuario:", error);
+      }
+    };
+
+    fetchUserRole();
+  }, []);
 
   useEffect(() => {
     setTableData(data);
@@ -128,19 +147,13 @@ export default function CensoTable({
   const handleReprocesar = async (ainid: number) => {
     try {
       setLoadingId(ainid);
-
       const response = await fetch(`/api/dashboard/censo/reprocesar?ainid=${ainid}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
-
       if (!response.ok) throw new Error("Error al reprocesar el ingreso");
-
       setTableData((prev) => prev.filter((item) => item.AINID !== ainid));
-
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
       alert("Ocurrió un error al reprocesar el ingreso ❌");
     } finally {
@@ -221,14 +234,14 @@ export default function CensoTable({
                     <FileTextIcon className="h-4 w-4" />
                   </Button>
 
-                  {item.ESTADO.toLowerCase() === "incompleto" && (
+                  {/* ✅ Solo mostrar si el usuario NO es administrador */}
+                  {item.ESTADO.toLowerCase() === "incompleto" && userRole !== 1 && (
                     <Button
                       variant="outline"
                       size="sm"
                       disabled={loadingId === item.AINID}
-                      className={`border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-slate-900 p-2 ${
-                        loadingId === item.AINID ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
+                      className={`border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-slate-900 p-2 ${loadingId === item.AINID ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
                       onClick={() => handleReprocesar(item.AINID)}
                     >
                       {loadingId === item.AINID ? (
@@ -267,11 +280,10 @@ export default function CensoTable({
               <Button
                 key={block}
                 onClick={() => setCurrentPage(block)}
-                className={`w-16 h-8 rounded text-sm ${
-                  currentPage === block
+                className={`w-16 h-8 rounded text-sm ${currentPage === block
                     ? "bg-yellow-500 text-slate-900 font-bold"
                     : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                }`}
+                  }`}
               >
                 {startRecord}-{endRecord}
               </Button>

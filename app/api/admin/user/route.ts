@@ -1,24 +1,34 @@
-import { NextResponse } from "next/server"
-import { getUsers, getUsersRoles } from "@/lib/database"
+import { NextResponse } from "next/server";
+import { getAllUsersAndRoles, createUser } from "@/lib/database";
 
 export async function GET() {
   try {
-    const users = await getUsers()
-    const roles = await getUsersRoles()
-
-    // Convertir las fechas a ISO string para el frontend
-    const formattedUsers = users.map((u: any) => ({
-      ...u,
-      last_login: u.last_login ? new Date(u.last_login).toISOString() : null,
-      created: u.created ? new Date(u.created).toISOString() : null,
-      last_activity: u.last_activity ? new Date(u.last_activity).toISOString() : null,
-      expired_at: u.expired_at ? new Date(u.expired_at).toISOString() : null,
-      sesion: u.sesion ? new Date(u.sesion).toISOString() : null,
-    }))
-
-    return NextResponse.json({ users: formattedUsers, roles })
+    const { users, roles } = await getAllUsersAndRoles();
+    return NextResponse.json({ users, roles });
   } catch (error) {
-    console.error("Error fetching users:", error)
-    return NextResponse.json({ error: "Error al obtener usuarios" }, { status: 500 })
+    console.error("Error obteniendo usuarios y roles:", error);
+    return NextResponse.json(
+      { error: "Error al obtener usuarios y roles" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const result = await createUser(body);
+
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+
+    return NextResponse.json(result);
+  } catch (error: any) {
+    console.error("Error creando usuario:", error);
+    return NextResponse.json(
+      { error: error.message || "Error al crear usuario" },
+      { status: 500 }
+    );
   }
 }
