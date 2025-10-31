@@ -44,7 +44,7 @@ const formatDate = (date: string | null) => {
   })
     .format(d)
     .replace(",", "")
-    .replace(/\
+    .replace(/\//g, "/");
 };
 
 export default function CensoTable({
@@ -234,7 +234,7 @@ export default function CensoTable({
                     <FileTextIcon className="h-4 w-4" />
                   </Button>
 
-                  
+
                   {item.ESTADO.toLowerCase() === "incompleto" && userRole !== 1 && (
                     <Button
                       variant="outline"
@@ -281,8 +281,8 @@ export default function CensoTable({
                 key={block}
                 onClick={() => setCurrentPage(block)}
                 className={`w-16 h-8 rounded text-sm ${currentPage === block
-                    ? "bg-yellow-500 text-slate-900 font-bold"
-                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                  ? "bg-yellow-500 text-slate-900 font-bold"
+                  : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                   }`}
               >
                 {startRecord}-{endRecord}

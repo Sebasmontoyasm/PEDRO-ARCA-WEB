@@ -3,7 +3,7 @@ const { parse } = require('url');
 const next = require('next');
 
 const port = 80;
-const dev = false; 
+const dev = false;
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
@@ -14,4 +14,7 @@ app.prepare().then(() => {
   }).listen(port, '0.0.0.0', () => {
     console.log(`> Ready on http://0.0.0.0:${port}`);
   });
+}).catch((err) => {
+  console.error('Error starting server:', err);
+  process.exit(1);
 });
