@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -71,7 +72,7 @@ function UserRow({
   );
 }
 
-// 🧭 Página de gestión de usuarios
+
 export default function UsuariosPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Rol[]>([]);
@@ -86,7 +87,7 @@ export default function UsuariosPage() {
     role: 1,
   });
 
-  // 🚀 Cargar usuarios y roles
+  
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -204,7 +205,7 @@ export default function UsuariosPage() {
     }
   };
 
-  // ✏️ Editar usuario
+  
   const handleEdit = (u: User) => {
     setEditingUser(u);
     setForm({ name: u.name, email: u.email, password: "", role: u.role });
@@ -247,9 +248,14 @@ export default function UsuariosPage() {
                 <DialogTitle className="text-white text-xl font-semibold">
                   {editingUser ? "Editar Usuario" : "Crear Usuario"}
                 </DialogTitle>
+                <DialogDescription className="text-slate-300 text-sm">
+                  {editingUser
+                    ? "Modifica la información del usuario existente"
+                    : "Rellena los campos para crear un nuevo usuario"}
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSave} className="flex flex-col gap-4 mt-4">
-                {/* 🧍‍♂️ Usuario */}
+                
                 <div className="flex flex-col gap-2">
                   <label htmlFor="name" className="text-sm font-medium text-gray-300">
                     Usuario <span className="text-red-500">*</span>
@@ -264,7 +270,7 @@ export default function UsuariosPage() {
                   />
                 </div>
 
-                {/* 📧 Correo */}
+                
                 <div className="flex flex-col gap-2">
                   <label htmlFor="email" className="text-sm font-medium text-gray-300">
                     Correo <span className="text-red-500">*</span>
@@ -280,15 +286,16 @@ export default function UsuariosPage() {
                   />
                 </div>
 
-                {/* 🔑 Contraseña */}
+                
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="password" className="text-sm font-medium text-gray-300">
-                    Contraseña {editingUser ? "" : <span className="text-red-500">*</span>}
+                  <label htmlFor="password" className="text-slate-300 text-sm mb-1">
+                    Contraseña
                   </label>
                   <Input
                     id="password"
                     placeholder="Contraseña"
                     type="password"
+                    autoComplete="current-password"
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
                     className="bg-slate-800 border border-slate-700 text-white focus:ring-2 focus:ring-yellow-500 rounded-xl"
@@ -296,7 +303,7 @@ export default function UsuariosPage() {
                   />
                 </div>
 
-                {/* 🧩 Rol */}
+                
                 <div className="flex flex-col gap-2">
                   <label htmlFor="role" className="text-sm font-medium text-gray-300">
                     Rol <span className="text-red-500">*</span>

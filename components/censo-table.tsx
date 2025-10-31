@@ -44,7 +44,7 @@ const formatDate = (date: string | null) => {
   })
     .format(d)
     .replace(",", "")
-    .replace(/\//g, "/");
+    .replace(/\
 };
 
 export default function CensoTable({
@@ -234,7 +234,7 @@ export default function CensoTable({
                     <FileTextIcon className="h-4 w-4" />
                   </Button>
 
-                  {/* ✅ Solo mostrar si el usuario NO es administrador */}
+                  
                   {item.ESTADO.toLowerCase() === "incompleto" && userRole !== 1 && (
                     <Button
                       variant="outline"

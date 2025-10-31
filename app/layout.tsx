@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
-import { Analytics } from '@vercel/analytics/next'
 import { ToastProvider } from "@/components/ui/toaster-provider";
 import './globals.css'
 
@@ -10,7 +9,7 @@ export const metadata: Metadata = {
   description: 'Dashboard clÍnica de fracturas',
   generator: 'Solutions-Systems',
   icons: {
-    icon: "favicon/bone.svg", // 👈 aquí el nuevo favicon
+    icon: "favicon/bone.svg", 
   },
 }
 
@@ -25,7 +24,6 @@ export default function RootLayout({
           <ToastProvider>
           {children}
         </ToastProvider>
-        <Analytics />
       </body>
     </html>
   )

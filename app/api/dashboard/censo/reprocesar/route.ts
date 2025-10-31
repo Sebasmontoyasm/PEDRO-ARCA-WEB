@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { reprocesarIngreso } from "@/lib/database";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   try {
     const { searchParams } = new URL(request.url);

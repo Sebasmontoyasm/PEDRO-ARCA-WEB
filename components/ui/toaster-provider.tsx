@@ -34,12 +34,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const push = React.useCallback((t: Omit<ToastItem, "id">) => {
     const id = String(Date.now()) + Math.random().toString(36).slice(2, 6);
-    const dur = t.duration ?? 4000; // ⏱ por defecto 4s
+    const dur = t.duration ?? 4000; 
 
     const item: ToastItem = { id, ...t, duration: dur };
     setToasts((s) => [item, ...s]);
 
-    // ⏳ Auto remove
+    
     if (dur > 0) {
       setTimeout(() => {
         setToasts((s) => s.filter((x) => x.id !== id));

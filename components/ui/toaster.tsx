@@ -13,7 +13,7 @@ import {
 export function Toaster() {
   const { toasts, dismiss } = useToast();
 
-  // ⏱ Auto dismiss a los 4 s
+  
   React.useEffect(() => {
     const timers = toasts.map((t) => setTimeout(() => dismiss(t.id), 4000));
     return () => timers.forEach(clearTimeout);

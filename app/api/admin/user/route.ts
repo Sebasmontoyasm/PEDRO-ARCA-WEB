@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const result = await createUser(body);
     return NextResponse.json(result);
   } catch (err: any) {
-    // 🧠 Manejo específico de duplicados
+    
     if (err.code === "ER_DUP_ENTRY") {
       return NextResponse.json(
         { error: "El correo electrónico ya está registrado." },
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🧱 Manejo general
+    
     return NextResponse.json(
       { error: err.message || "Error en el servidor" },
       { status: 400 }

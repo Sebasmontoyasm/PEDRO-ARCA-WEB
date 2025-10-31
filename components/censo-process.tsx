@@ -15,7 +15,7 @@ import { Copy } from 'lucide-react'
 export default function CensoDetail({ open, onClose, data }: CensoDetailProps) {
   const [docs, setDocs] = useState<CensoDocument[]>([])
   const [loading, setLoading] = useState(false)
-  const [toast, setToast] = useState<string | null>(null) // mensaje del toast
+  const [toast, setToast] = useState<string | null>(null) 
 
   useEffect(() => {
     if (open && data?.AINID) {
@@ -45,7 +45,7 @@ export default function CensoDetail({ open, onClose, data }: CensoDetailProps) {
   function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text).then(() => {
       setToast('Ruta copiada al portapapeles')
-      setTimeout(() => setToast(null), 3000) // desaparece en 3s
+      setTimeout(() => setToast(null), 3000) 
     }).catch(err => {
       console.error('Error copiando al portapapeles:', err)
       setToast('Error al copiar')
@@ -143,7 +143,7 @@ export default function CensoDetail({ open, onClose, data }: CensoDetailProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Toast */}
+      
       {toast && (
         <div
           role="alert"

@@ -54,10 +54,10 @@ export function DashboardHeader() {
     fetchUserRole()
   }, [])
 
- // cliente: handleLogout (ejecutar en navegador)
+ 
 async function handleLogout() {
   try {
-    // Llamada al endpoint que borra la cookie HttpOnly
+    
     await fetch("/api/auth/logout", {
       method: "POST",
       credentials: "include",
@@ -76,9 +76,9 @@ async function handleLogout() {
     <header className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          {/* --- Izquierda --- */}
+          
           <div className="flex items-center gap-6">
-            {/* Logo homogeneo */}
+            
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-lg bg-slate-700 flex items-center justify-center shadow-md">
                 <span className="text-white font-bold text-sm tracking-tight">C</span>
@@ -96,7 +96,7 @@ async function handleLogout() {
             </nav>
           </div>
 
-          {/* --- Derecha --- */}
+          
           <div className="flex items-center gap-4">
             {fechaExtraccion ? (
               <span className="text-sm font-semibold text-white select-none">
@@ -108,7 +108,7 @@ async function handleLogout() {
               </span>
             )}
 
-            {/* Filtro de tiempo */}
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -140,7 +140,7 @@ async function handleLogout() {
               <Bell className="h-4 w-4" />
             </Button>
 
-            {/* Menú de configuración */}
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
