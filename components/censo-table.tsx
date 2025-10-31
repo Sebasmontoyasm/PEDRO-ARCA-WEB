@@ -44,7 +44,7 @@ const formatDate = (date: string | null) => {
   })
     .format(d)
     .replace(",", "")
-    .replace(/\
+    .replace(/\ /g, " ");
 };
 
 export default function CensoTable({
@@ -202,7 +202,9 @@ export default function CensoTable({
                 <TableCell className="text-white px-2 py-3 text-center">{item.AINCONSEC}</TableCell>
                 <TableCell className="text-slate-300 px-2 py-3 text-center">{formatDate(item.AINFECING)}</TableCell>
                 <TableCell className="text-slate-300 px-2 py-3 text-center">{item.PACNUMDOC}</TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-center break-words whitespace-normal max-w-[180px]">{item.GPANOMCOM}</TableCell>
+                <TableCell className="text-slate-300 px-2 py-3 text-center wrap-break-word whitespace-normal max-w-[180px]">
+                  {item.GPANOMCOM}
+                </TableCell>
                 <TableCell className="text-slate-300 px-2 py-3 text-center">{item.ESTADO}</TableCell>
                 <TableCell className="px-2 py-3 text-left">
                   <div className="space-y-1">
@@ -221,7 +223,7 @@ export default function CensoTable({
                     <span className="text-sm font-medium text-white">{item.EXACTITUD}%</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-left break-words whitespace-normal max-w-[200px]">{item.OBSERVACION}</TableCell>
+                <TableCell className="text-slate-300 px-2 py-3 text-left wrap-break-word whitespace-normal max-w-[200px]">{item.OBSERVACION}</TableCell>
                 <TableCell className="text-slate-300 px-2 py-3 text-center">{formatDate(item.FECHAINSERT)}</TableCell>
                 <TableCell className="text-slate-300 px-2 py-3 text-center">{item.TIMEPROCESS}</TableCell>
                 <TableCell className="px-2 py-3 text-center flex justify-center items-center gap-2">
@@ -234,7 +236,7 @@ export default function CensoTable({
                     <FileTextIcon className="h-4 w-4" />
                   </Button>
 
-                  
+
                   {item.ESTADO.toLowerCase() === "incompleto" && userRole !== 1 && (
                     <Button
                       variant="outline"
@@ -281,8 +283,8 @@ export default function CensoTable({
                 key={block}
                 onClick={() => setCurrentPage(block)}
                 className={`w-16 h-8 rounded text-sm ${currentPage === block
-                    ? "bg-yellow-500 text-slate-900 font-bold"
-                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                  ? "bg-yellow-500 text-slate-900 font-bold"
+                  : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                   }`}
               >
                 {startRecord}-{endRecord}

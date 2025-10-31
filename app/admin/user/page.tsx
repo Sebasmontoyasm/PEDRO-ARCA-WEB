@@ -37,10 +37,10 @@ function UserRow({
 
   return (
     <TableRow className="hover:bg-slate-800/80 transition-colors duration-200" key={user.id}>
-      <TableCell className="text-gray-300 max-w-[150px] whitespace-pre-line break-words">
+      <TableCell className="text-gray-300 max-w-[150px] whitespace-pre-line wrap-break-word">
         {user.name}
       </TableCell>
-      <TableCell className="text-gray-300 max-w-[200px] whitespace-pre-line break-words">
+      <TableCell className="text-gray-300 max-w-[200px] whitespace-pre-line wrap-break-word">
         {user.email}
       </TableCell>
       <TableCell className="text-gray-300 text-center">{user.rol}</TableCell>
@@ -215,7 +215,7 @@ export default function UsuariosPage() {
   return (
     <>
       <Navbar />
-      <div className="p-8 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 min-h-screen transition-colors">
+      <div className="p-8 bg-linear-to-b from-slate-950 via-slate-900 to-slate-950 min-h-screen transition-colors">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-white tracking-tight drop-shadow-lg">
             Gestión de Usuarios

@@ -48,7 +48,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch("/api/dashboard/censo");
+        const res = await fetch("/api/dashboard/censo", { credentials: "include" });
         const json = await res.json();
 
         const mapped: Ingreso[] = json.censo.map((item: any) => ({
