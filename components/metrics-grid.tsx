@@ -1,4 +1,3 @@
-// ...existing code...
 "use client";
 
 import { useEffect, useState } from "react";
@@ -29,7 +28,7 @@ import {
 import { Metric, Metric_Doc, Metric_General } from "@/types/metrics-grid";
 import { Document } from "@/types/document";
 
-export default function Page() {
+export default function MetricsGrid() {
   const [generalMetric, setMetric] = useState<Metric[]>([]);
   const [pieData, setPieData] = useState<any[]>([]);
   const [barData, setBarData] = useState<any[]>([]);
@@ -39,10 +38,10 @@ export default function Page() {
   useEffect(() => {
     const controller = new AbortController();
     const signal = controller.signal;
+    let isMounted = true;
 
     async function fetchMetrics() {
       try {
-        // Forzar petición de red (sin cache) para que al dar F5 siempre traiga datos nuevos
         const res = await fetch("/api/dashboard/metrics", {
           cache: "no-store",
           headers: {
@@ -72,13 +71,11 @@ export default function Page() {
         const incompleto = general.INCOMPLETO ?? 0;
         const procesadoTotal = procesado + incompleto;
 
-        // 🔹 Tasa de cumplimiento
         const tasaCumplimiento =
           procesadoTotal > 0
             ? ((procesado / procesadoTotal) * 100).toFixed(2)
             : "0.00";
 
-        // 🔹 Documentos
         const docs: Document = dataMetrics.docs?.[0] || {
           PROCESADO: 0,
           PARCIALES: 0,
@@ -109,190 +106,155 @@ export default function Page() {
             showProgress: true,
           },
         ];
-        setDocsGenerales(docsGeneralesCalc);
 
-        // 🔹 PieChart
-        setPieData([
-          {
-            name: "Procesados",
-            value: procesado,
-            color: "#22c55e",
-          },
-          {
-            name: "Incompletos",
-            value: incompleto,
-            color: "#f43f5e",
-          },
-          {
-            name: "Pendientes",
-            value: pendientes,
-            color: "#3b82f6",
-          },
-        ]);
+        if (isMounted) {
+          setDocsGenerales(docsGeneralesCalc);
+          setPieData([
+            { name: "Procesados", value: procesado, color: "#22c55e" },
+            { name: "Incompletos", value: incompleto, color: "#f43f5e" },
+            { name: "Pendientes", value: pendientes, color: "#3b82f6" },
+          ]);
 
-        // 🔹 BarChart (Censos por mes)
-        const censoxmes = dataMetrics.censoxmes || [];
-        const monthNames = [
-          "Ene", "Feb", "Mar", "Abr", "May", "Jun",
-          "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
-        ];
+          const censoxmes = dataMetrics.censoxmes || [];
+          const monthNames = [
+            "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+            "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
+          ];
 
-        const barProcessed = censoxmes.map(
-          (row: { MES: string; TOTAL: number }) => {
-            const [year, month] = row.MES.split("-");
-            return {
-              name: `${monthNames[parseInt(month) - 1]} ${year}`,
-              ingresos: row.TOTAL,
-              year: year,
-            };
+          setBarData(
+            censoxmes.map((row: { MES: string; TOTAL: number }) => {
+              const [year, month] = row.MES.split("-");
+              return { name: `${monthNames[parseInt(month) - 1]} ${year}`, ingresos: row.TOTAL, year };
+            })
+          );
+
+          if (barData.length > 0 && !selectedYear) {
+            setSelectedYear(barData[0].year);
           }
-        );
 
-        setBarData(barProcessed);
-
-        if (barProcessed.length > 0 && !selectedYear) {
-          setSelectedYear(barProcessed[0].year);
+          setMetric([
+            {
+              title: "Ingresos Pendientes",
+              value: pendientes ?? 0,
+              trend: "up",
+              icon: Users,
+              showProgress: false,
+            },
+            {
+              title: "Ingresos Procesados",
+              value: procesadoTotal ?? 0,
+              trend: "up",
+              icon: SearchCheck,
+              showProgress: false,
+            },
+            {
+              title: "Ingresos sin documentos obligatorios",
+              value: general.INCOMPLETO ?? 0,
+              trend: "down",
+              icon: CircleX,
+              color: "text-red-400",
+              showProgress: false,
+            },
+            {
+              title: "Ingresos con documentación completa",
+              value: procesado,
+              trend: "up",
+              icon: Bot,
+              color: "text-green-400",
+              showProgress: false,
+            },
+            {
+              title: "Tasa de cumplimiento de ingresos",
+              value: `${tasaCumplimiento}%`,
+              trend: "up",
+              icon: TrendingUp,
+              color: "text-green-400",
+              showProgress: true,
+            },
+          ]);
         }
-
-        const mapped: Metric[] = [
-          {
-            title: "Ingresos Pendientes",
-            value: pendientes ?? 0,
-            trend: "up",
-            icon: Users,
-            showProgress: false,
-          },
-          {
-            title: "Ingresos Procesados",
-            value: procesadoTotal ?? 0,
-            trend: "up",
-            icon: SearchCheck,
-            showProgress: false,
-          },
-          {
-            title: "Ingresos sin documentos obligatorios",
-            value: general.INCOMPLETO ?? 0,
-            trend: "down",
-            icon: CircleX,
-            color: "text-red-400",
-            showProgress: false,
-          },
-          {
-            title: "Ingresos con documentación completa",
-            value: procesado,
-            trend: "up",
-            icon: Bot,
-            color: "text-green-400",
-            showProgress: false,
-          },
-          {
-            title: "Tasa de cumplimiento de ingresos",
-            value: `${tasaCumplimiento}%`,
-            trend: "up",
-            icon: TrendingUp,
-            color: "text-green-400",
-            showProgress: true,
-          },
-        ];
-
-        setMetric(mapped);
       } catch (error: any) {
-        if (error.name !== "AbortError") {
-          console.error("Error obteniendo métricas:", error);
-        }
+        if (error.name !== "AbortError") console.error("Error obteniendo métricas:", error);
       }
     }
 
-    fetchMetrics();
+    fetchMetrics(); 
+    const interval = setInterval(fetchMetrics, 15000); 
 
     return () => {
+      isMounted = false;
+      clearInterval(interval);
       controller.abort();
     };
-  }, [selectedYear]);
-  // ...existing code...
+  }, [selectedYear, barData.length]);
 
   const filteredBarData = barData.filter((d) => d.year === selectedYear);
 
   return (
-    <div className="container mx-auto px-6 py-8 space-y-8">
-      <h2 className="text-xl font-bold tracking-tight text-white">
-        Métricas Generales
-      </h2>
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {generalMetric.map((metric, index) => {
+        const Icon = metric.icon;
+        const isPositive = metric.trend === "up";
 
-      {/* MÉTRICAS DE INGRESOS */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {generalMetric.map((metric, index) => {
-          const Icon = metric.icon;
-          const isPositive = metric.trend === "up";
+        return (
+          <Card key={index} className="bg-slate-800 border-slate-700">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white">
+                {metric.title}
+              </CardTitle>
+              <Icon
+                className={`h-4 w-4 ${
+                  metric.color ?? (isPositive ? "text-green-400" : "text-red-400")
+                }`}
+              />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${metric.color ?? "text-white"}`}>
+                {metric.value}
+              </div>
 
-          return (
-            <Card key={index} className="bg-slate-800 border-slate-700">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-white">
-                  {metric.title}
-                </CardTitle>
-                <Icon
-                  className={`h-4 w-4 ${
-                    metric.color ??
-                    (isPositive ? "text-green-400" : "text-red-400")
-                  }`}
-                />
-              </CardHeader>
-              <CardContent>
-                <div
-                  className={`text-2xl font-bold ${
-                    metric.color ?? "text-white"
-                  }`}
-                >
-                  {metric.value}
+              {metric.showProgress && (
+                <div className="mt-2">
+                  <Progress
+                    value={parseFloat(String(metric.value).replace("%", ""))}
+                    className="w-full bg-slate-700"
+                  />
                 </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
 
-                {metric.showProgress && (
-                  <div className="mt-2">
-                    <Progress
-                      value={parseFloat(String(metric.value).replace("%", ""))}
-                      className="w-full bg-slate-700"
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
+      {docsGenerales.map((doc, index) => {
+        const Icon = doc.icon;
+        return (
+          <Card key={index} className="bg-slate-800 border-slate-700">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white">
+                {doc.title}
+              </CardTitle>
+              <Icon className={`h-4 w-4 ${doc.color}`} />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${doc.color}`}>{doc.value}</div>
 
-        {/* MÉTRICAS DE DOCUMENTOS */}
-        {docsGenerales.map((doc, index) => {
-          const Icon = doc.icon;
-          return (
-            <Card key={index} className="bg-slate-800 border-slate-700">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-white">
-                  {doc.title}
-                </CardTitle>
-                <Icon className={`h-4 w-4 ${doc.color}`} />
-              </CardHeader>
-              <CardContent>
-                <div className={`text-2xl font-bold ${doc.color}`}>
-                  {doc.value}
+              {doc.showProgress && (
+                <div className="mt-2">
+                  <Progress
+                    value={parseFloat(String(doc.value).replace("%", ""))}
+                    className="w-full bg-slate-700"
+                  />
                 </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
 
-                {doc.showProgress && (
-                  <div className="mt-2">
-                    <Progress
-                      value={parseFloat(String(doc.value).replace("%", ""))}
-                      className="w-full bg-slate-700"
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* GRÁFICAS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* PIE CHART */}
+      
+      <div className="md:col-span-2 grid grid-cols-1 gap-6">
+        
         <Card className="bg-slate-800 border-slate-700">
           <CardHeader>
             <CardTitle className="text-sm font-medium text-white">
@@ -302,13 +264,7 @@ export default function Page() {
           <CardContent className="h-64 flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie
-                  data={pieData}
-                  dataKey="value"
-                  nameKey="name"
-                  outerRadius={80}
-                  label
-                >
+                <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={80} label>
                   {pieData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
@@ -319,7 +275,7 @@ export default function Page() {
           </CardContent>
         </Card>
 
-        {/* BAR CHART */}
+        
         <Card className="bg-slate-800 border-slate-700">
           <CardHeader className="flex justify-between items-center">
             <CardTitle className="text-sm font-medium text-white">

@@ -91,7 +91,7 @@ export default function DashboardPage() {
       <DashboardHeader />
 
       <main className="container mx-auto px-6 py-8 space-y-8">
-        {/* Header */}
+        
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <FileTextIcon className="h-8 w-8 text-yellow-500" />
@@ -110,10 +110,10 @@ export default function DashboardPage() {
           </Button>
         </div>
 
-        {/* Métricas */}
+        
         <MetricsGrid />
 
-        {/* Filtros */}
+        
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <h2 className="flex items-center gap-2 text-white text-lg font-semibold">
@@ -134,7 +134,7 @@ export default function DashboardPage() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Búsqueda General */}
+            
             <div>
               <label className="text-sm font-medium text-white">Búsqueda General</label>
               <div className="relative mt-1">
@@ -148,7 +148,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Estado */}
+            
             <div>
               <label className="text-sm font-medium text-white">Estado del ingreso</label>
               <Select value={filtroEstado} onValueChange={setFiltroEstado}>
@@ -168,7 +168,7 @@ export default function DashboardPage() {
               </Select>
             </div>
 
-            {/* Rango de ingreso */}
+            
             <div>
               <label className="text-sm font-medium text-white">Rango de ingreso</label>
               <Popover>
@@ -204,7 +204,7 @@ export default function DashboardPage() {
               </Popover>
             </div>
 
-            {/* Rango de procesado */}
+            
             <div>
               <label className="text-sm font-medium text-white">Rango de procesado</label>
               <Popover>
@@ -242,7 +242,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Tabla */}
+        
         <CensoTable
           data={data}
           filtroEstado={filtroEstado}

@@ -1,7 +1,7 @@
 import mysql from "mysql2/promise"
 import bcrypt from "bcryptjs"
 
-// 🧩 Configuración del pool de conexiones
+
 const dbConfig = {
   host: process.env.DB_HOST || "localhost",
   port: Number.parseInt(process.env.DB_PORT || "3306"),
@@ -18,9 +18,9 @@ const dbConfig = {
 
 const pool = mysql.createPool(dbConfig)
 
-// ============================================================
-// 🧠 Función genérica para ejecutar consultas
-// ============================================================
+
+
+
 export async function executeQuery(query: string, params: any[] = []) {
   try {
     const [results] = await pool.execute(query, params)
@@ -31,9 +31,9 @@ export async function executeQuery(query: string, params: any[] = []) {
   }
 }
 
-// ============================================================
-// 📊 Funciones de métricas
-// ============================================================
+
+
+
 export async function getMetricDocs() {
   try {
     const SQL = `CALL SP_ARCA_METRICS_DOC();`
@@ -209,7 +209,7 @@ export async function updateUser({
   let params: any[];
 
   if (password && password.trim() !== "") {
-    // 🔐 Nuevo hash solo si se envió una contraseña
+    
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password + salt, 10);
 
@@ -220,7 +220,7 @@ export async function updateUser({
     `;
     params = [name, email, password_hash, salt, role, id];
   } else {
-    // ✏️ Actualizar solo datos básicos
+    
     SQL = `
       UPDATE user
       SET name = ?, email = ?, role = ?

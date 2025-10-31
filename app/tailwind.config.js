@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        card: "rgba(31, 41, 55, 0.5)", // ejemplo grisazulado semitransparente
+        card: "rgba(31, 41, 55, 0.5)", 
       },
     },
   },

@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -38,7 +39,6 @@ export default function NavBar() {
   const [user, setUser] = useState<{ name: string; role: number } | null>(null);
   const router = useRouter();
 
-  // ✅ Verificar sesión activa
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -60,7 +60,7 @@ export default function NavBar() {
     checkSession();
   }, []);
 
-  // ✅ Login
+  
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -119,7 +119,7 @@ export default function NavBar() {
     }
   };
 
-  // ✅ Logout
+  
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
@@ -139,7 +139,7 @@ export default function NavBar() {
   return (
     <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur">
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-        {/* Logo + Dashboard */}
+        
         <div className="flex items-center gap-5">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
@@ -163,7 +163,7 @@ export default function NavBar() {
           )}
         </div>
 
-        {/* Sesión */}
+        
         {user ? (
           <div className="flex items-center gap-3">
             <span className="text-white text-sm">
@@ -217,6 +217,9 @@ export default function NavBar() {
                 <DialogTitle className="text-lg font-semibold text-yellow-500">
                   Iniciar sesión
                 </DialogTitle>
+                <DialogDescription className="text-slate-300 text-sm">
+                  Iniciar sesión
+                </DialogDescription>
               </DialogHeader>
 
               <form className="flex flex-col gap-3 mt-4" onSubmit={handleLogin}>
@@ -260,7 +263,7 @@ export default function NavBar() {
                 </Button>
               </form>
 
-              {/* Toast oscuro abajo del modal */}
+              
               <Toaster
                 position="bottom-center"
                 toastOptions={{
