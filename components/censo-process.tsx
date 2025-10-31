@@ -91,10 +91,10 @@ export default function CensoDetail({ open, onClose, data }: CensoDetailProps) {
                       >
                         <td className="px-3 py-2">{doc.Documento ?? '-'}</td>
                         <td className="px-3 py-2">{doc.Clasificacion ?? '-'}</td>
-                        <td className="px-3 py-2 max-w-[250px] whitespace-normal break-words">
+                        <td className="px-3 py-2 max-w-[250px] whitespace-normal wrap-break-word">
                           {doc.Ruta ? (
                             <div className="flex flex-col gap-1">
-                              <span className="break-words">{doc.Archivo}</span>
+                              <span className="wrap-break-word">{doc.Archivo}</span>
                             </div>
                           ) : (
                             "-"

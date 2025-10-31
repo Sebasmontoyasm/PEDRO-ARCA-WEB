@@ -202,7 +202,9 @@ export default function CensoTable({
                 <TableCell className="text-white px-2 py-3 text-center">{item.AINCONSEC}</TableCell>
                 <TableCell className="text-slate-300 px-2 py-3 text-center">{formatDate(item.AINFECING)}</TableCell>
                 <TableCell className="text-slate-300 px-2 py-3 text-center">{item.PACNUMDOC}</TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-center break-words whitespace-normal max-w-[180px]">{item.GPANOMCOM}</TableCell>
+                <TableCell className="text-slate-300 px-2 py-3 text-center wrap-break-word whitespace-normal max-w-[180px]">
+                  {item.GPANOMCOM}
+                </TableCell>
                 <TableCell className="text-slate-300 px-2 py-3 text-center">{item.ESTADO}</TableCell>
                 <TableCell className="px-2 py-3 text-left">
                   <div className="space-y-1">
@@ -221,7 +223,7 @@ export default function CensoTable({
                     <span className="text-sm font-medium text-white">{item.EXACTITUD}%</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-slate-300 px-2 py-3 text-left break-words whitespace-normal max-w-[200px]">{item.OBSERVACION}</TableCell>
+                <TableCell className="text-slate-300 px-2 py-3 text-left wrap-break-word whitespace-normal max-w-[200px]">{item.OBSERVACION}</TableCell>
                 <TableCell className="text-slate-300 px-2 py-3 text-center">{formatDate(item.FECHAINSERT)}</TableCell>
                 <TableCell className="text-slate-300 px-2 py-3 text-center">{item.TIMEPROCESS}</TableCell>
                 <TableCell className="px-2 py-3 text-center flex justify-center items-center gap-2">

@@ -29,7 +29,7 @@ export function DashboardHeader() {
   useEffect(() => {
     async function fetchFechaAnaExtraccion() {
       try {
-        const res = await fetch("/api/rpa/extraccion")
+        const res = await fetch("/api/rpa/extraccion",{ credentials: "include" })
         const data = await res.json()
         setFecha(data.timeAnaExtraccion.fechainsert)
       } catch (error) {
@@ -40,7 +40,7 @@ export function DashboardHeader() {
 
     async function fetchUserRole() {
       try {
-        const res = await fetch("/api/auth/me")
+        const res = await fetch("/api/auth/me",{ credentials: "include" })
         const data = await res.json()
 
         setRol(data.user?.role || data.user?.role || null)
@@ -73,7 +73,7 @@ async function handleLogout() {
 
 
   return (
-    <header className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
+    <header className="border-b bg-card/50 backdrop-blur supports-backdrop-filter:bg-card/50">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           

@@ -49,7 +49,7 @@ export default function MetricsGrid() {
             Pragma: "no-cache",
             Expires: "0",
           },
-          signal,
+          signal, credentials: "include"
         });
 
         if (!res.ok) throw new Error("Error al obtener métricas");
