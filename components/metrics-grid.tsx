@@ -49,7 +49,8 @@ export default function MetricsGrid() {
             Pragma: "no-cache",
             Expires: "0",
           },
-          signal, credentials: "include"
+          signal,
+          credentials: "include",
         });
 
         if (!res.ok) throw new Error("Error al obtener métricas");
@@ -178,8 +179,8 @@ export default function MetricsGrid() {
       }
     }
 
-    fetchMetrics(); 
-    const interval = setInterval(fetchMetrics, 15000); 
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 15000);
 
     return () => {
       isMounted = false;
@@ -203,16 +204,13 @@ export default function MetricsGrid() {
                 {metric.title}
               </CardTitle>
               <Icon
-                className={`h-4 w-4 ${
-                  metric.color ?? (isPositive ? "text-green-400" : "text-red-400")
-                }`}
+                className={`h-4 w-4 ${metric.color ?? (isPositive ? "text-green-400" : "text-red-400")}`}
               />
             </CardHeader>
             <CardContent>
               <div className={`text-2xl font-bold ${metric.color ?? "text-white"}`}>
                 {metric.value}
               </div>
-
               {metric.showProgress && (
                 <div className="mt-2">
                   <Progress
@@ -238,7 +236,6 @@ export default function MetricsGrid() {
             </CardHeader>
             <CardContent>
               <div className={`text-2xl font-bold ${doc.color}`}>{doc.value}</div>
-
               {doc.showProgress && (
                 <div className="mt-2">
                   <Progress
@@ -252,10 +249,10 @@ export default function MetricsGrid() {
         );
       })}
 
-      
-      <div className="md:col-span-2 grid grid-cols-1 gap-6">
-        
-        <Card className="bg-slate-800 border-slate-700">
+      {/* Sección de gráficos */}
+      <div className="md:col-span-4 flex flex-col md:flex-row gap-6">
+        {/* Pie Chart */}
+        <Card className="flex-1 bg-slate-800 border-slate-700">
           <CardHeader>
             <CardTitle className="text-sm font-medium text-white">
               Distribución de Ingresos
@@ -275,8 +272,8 @@ export default function MetricsGrid() {
           </CardContent>
         </Card>
 
-        
-        <Card className="bg-slate-800 border-slate-700">
+        {/* Bar Chart */}
+        <Card className="flex-1 bg-slate-800 border-slate-700">
           <CardHeader className="flex justify-between items-center">
             <CardTitle className="text-sm font-medium text-white">
               Ingresos Mensuales

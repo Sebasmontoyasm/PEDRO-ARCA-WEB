@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 
 export const runtime = "nodejs";
 
-export async function GET(req: Request) {
+export async function GET() {
   const cookieStore = cookies();
   const token = cookieStore.get("token")?.value;
 
