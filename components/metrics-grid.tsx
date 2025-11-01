@@ -36,28 +36,26 @@ export default function MetricsGrid() {
   const [docsGenerales, setDocsGenerales] = useState<Metric_Doc[]>([]);
 
   useEffect(() => {
-    const controller = new AbortController();
-    const signal = controller.signal;
     let isMounted = true;
+    const controller = new AbortController();
 
     async function fetchMetrics() {
       try {
         const res = await fetch("/api/dashboard/metrics", {
           cache: "no-store",
+          credentials: "include",
           headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
             Pragma: "no-cache",
             Expires: "0",
           },
-          signal,
-          credentials: "include",
+          signal: controller.signal,
         });
 
         if (!res.ok) throw new Error("Error al obtener métricas");
-
         const dataMetrics = await res.json();
-        const generalArray: Metric_General[] = dataMetrics.general || [];
 
+        const generalArray: Metric_General[] = dataMetrics.general || [];
         const general = generalArray.reduce<Record<string, number>>((acc, row) => {
           acc[row.NOMBRE.toUpperCase()] = row.TOTAL;
           return acc;
@@ -71,7 +69,6 @@ export default function MetricsGrid() {
         const procesado = general.PROCESADO ?? 0;
         const incompleto = general.INCOMPLETO ?? 0;
         const procesadoTotal = procesado + incompleto;
-
         const tasaCumplimiento =
           procesadoTotal > 0
             ? ((procesado / procesadoTotal) * 100).toFixed(2)
@@ -108,6 +105,15 @@ export default function MetricsGrid() {
           },
         ];
 
+        const censoxmes = dataMetrics.censoxmes || [];
+        const monthNames = [
+          "Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic",
+        ];
+        const barArray = censoxmes.map((row: { MES: string; TOTAL: number }) => {
+          const [year, month] = row.MES.split("-");
+          return { name: `${monthNames[parseInt(month) - 1]} ${year}`, ingresos: row.TOTAL, year };
+        });
+
         if (isMounted) {
           setDocsGenerales(docsGeneralesCalc);
           setPieData([
@@ -115,63 +121,16 @@ export default function MetricsGrid() {
             { name: "Incompletos", value: incompleto, color: "#f43f5e" },
             { name: "Pendientes", value: pendientes, color: "#3b82f6" },
           ]);
-
-          const censoxmes = dataMetrics.censoxmes || [];
-          const monthNames = [
-            "Ene", "Feb", "Mar", "Abr", "May", "Jun",
-            "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
-          ];
-
-          setBarData(
-            censoxmes.map((row: { MES: string; TOTAL: number }) => {
-              const [year, month] = row.MES.split("-");
-              return { name: `${monthNames[parseInt(month) - 1]} ${year}`, ingresos: row.TOTAL, year };
-            })
-          );
-
-          if (barData.length > 0 && !selectedYear) {
-            setSelectedYear(barData[0].year);
+          setBarData(barArray);
+          if (!selectedYear && barArray.length > 0) {
+            setSelectedYear(barArray[0].year);
           }
-
           setMetric([
-            {
-              title: "Ingresos Pendientes",
-              value: pendientes ?? 0,
-              trend: "up",
-              icon: Users,
-              showProgress: false,
-            },
-            {
-              title: "Ingresos Procesados",
-              value: procesadoTotal ?? 0,
-              trend: "up",
-              icon: SearchCheck,
-              showProgress: false,
-            },
-            {
-              title: "Ingresos sin documentos obligatorios",
-              value: general.INCOMPLETO ?? 0,
-              trend: "down",
-              icon: CircleX,
-              color: "text-red-400",
-              showProgress: false,
-            },
-            {
-              title: "Ingresos con documentación completa",
-              value: procesado,
-              trend: "up",
-              icon: Bot,
-              color: "text-green-400",
-              showProgress: false,
-            },
-            {
-              title: "Tasa de cumplimiento de ingresos",
-              value: `${tasaCumplimiento}%`,
-              trend: "up",
-              icon: TrendingUp,
-              color: "text-green-400",
-              showProgress: true,
-            },
+            { title: "Ingresos Pendientes", value: pendientes, trend: "up", icon: Users },
+            { title: "Ingresos Procesados", value: procesadoTotal, trend: "up", icon: SearchCheck },
+            { title: "Ingresos sin documentos obligatorios", value: general.INCOMPLETO ?? 0, trend: "down", icon: CircleX, color: "text-red-400" },
+            { title: "Ingresos con documentación completa", value: procesado, trend: "up", icon: Bot, color: "text-green-400" },
+            { title: "Tasa de cumplimiento de ingresos", value: `${tasaCumplimiento}%`, trend: "up", icon: TrendingUp, color: "text-green-400", showProgress: true },
           ]);
         }
       } catch (error: any) {
@@ -184,10 +143,10 @@ export default function MetricsGrid() {
 
     return () => {
       isMounted = false;
-      clearInterval(interval);
       controller.abort();
+      clearInterval(interval);
     };
-  }, [selectedYear, barData.length]);
+  }, []); // ✅ solo se ejecuta una vez
 
   const filteredBarData = barData.filter((d) => d.year === selectedYear);
 
@@ -196,21 +155,14 @@ export default function MetricsGrid() {
       {generalMetric.map((metric, index) => {
         const Icon = metric.icon;
         const isPositive = metric.trend === "up";
-
         return (
           <Card key={index} className="bg-slate-800 border-slate-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">
-                {metric.title}
-              </CardTitle>
-              <Icon
-                className={`h-4 w-4 ${metric.color ?? (isPositive ? "text-green-400" : "text-red-400")}`}
-              />
+              <CardTitle className="text-sm font-medium text-white">{metric.title}</CardTitle>
+              <Icon className={`h-4 w-4 ${metric.color ?? (isPositive ? "text-green-400" : "text-red-400")}`} />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${metric.color ?? "text-white"}`}>
-                {metric.value}
-              </div>
+              <div className={`text-2xl font-bold ${metric.color ?? "text-white"}`}>{metric.value}</div>
               {metric.showProgress && (
                 <div className="mt-2">
                   <Progress
@@ -229,9 +181,7 @@ export default function MetricsGrid() {
         return (
           <Card key={index} className="bg-slate-800 border-slate-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">
-                {doc.title}
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-white">{doc.title}</CardTitle>
               <Icon className={`h-4 w-4 ${doc.color}`} />
             </CardHeader>
             <CardContent>
@@ -249,14 +199,11 @@ export default function MetricsGrid() {
         );
       })}
 
-      {/* Sección de gráficos */}
+      {/* Charts */}
       <div className="md:col-span-4 flex flex-col md:flex-row gap-6">
-        {/* Pie Chart */}
         <Card className="flex-1 bg-slate-800 border-slate-700">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-white">
-              Distribución de Ingresos
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-white">Distribución de Ingresos</CardTitle>
           </CardHeader>
           <CardContent className="h-64 flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
@@ -272,21 +219,16 @@ export default function MetricsGrid() {
           </CardContent>
         </Card>
 
-        {/* Bar Chart */}
         <Card className="flex-1 bg-slate-800 border-slate-700">
           <CardHeader className="flex justify-between items-center">
-            <CardTitle className="text-sm font-medium text-white">
-              Ingresos Mensuales
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-white">Ingresos Mensuales</CardTitle>
             <select
               className="bg-slate-700 text-white text-sm p-1 rounded"
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
             >
               {[...new Set(barData.map((d) => d.year))].map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
+                <option key={year} value={year}>{year}</option>
               ))}
             </select>
           </CardHeader>

@@ -29,7 +29,7 @@ export function DashboardHeader() {
   useEffect(() => {
     async function fetchFechaAnaExtraccion() {
       try {
-        const res = await fetch("/api/rpa/extraccion",{ credentials: "include" })
+        const res = await fetch("/api/rpa/extraccion",{ credentials: "include",cache: "no-store" })
         const data = await res.json()
         setFecha(data.timeAnaExtraccion.fechainsert)
       } catch (error) {

@@ -91,7 +91,7 @@ export default function UsuariosPage() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/user", { credentials: "include" });
+      const res = await fetch("/api/admin/user", { credentials: "include", cache: "no-store" });
       const data = await res.json();
 
       const formattedUsers: User[] = (data.users || []).map((u: any) => ({
@@ -139,6 +139,7 @@ export default function UsuariosPage() {
         method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
+        cache: "no-store",
         body: JSON.stringify(form),
       });
 
@@ -192,6 +193,7 @@ export default function UsuariosPage() {
       const res = await fetch(`/api/admin/user/${id}`, {
         method: "DELETE",
         credentials: "include",
+        cache: "no-store"
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al eliminar usuario");
