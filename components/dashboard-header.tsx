@@ -29,56 +29,61 @@ export function DashboardHeader() {
   useEffect(() => {
     async function fetchFechaAnaExtraccion() {
       try {
-        const res = await fetch("/api/rpa/extraccion",{ credentials: "include",cache: "no-store" })
+        const res = await fetch("/api/rpa/extraccion", { credentials: "include", cache: "no-store" })
         const data = await res.json()
         setFecha(data.timeAnaExtraccion.fechainsert)
       } catch (error) {
-        console.error(error)
+        console.error("Error obteniendo fecha de extracción:", error)
         setFecha(null)
       }
     }
 
     async function fetchUserRole() {
       try {
-        const res = await fetch("/api/auth/me",{ credentials: "include" })
+        const res = await fetch("/api/auth/me", { credentials: "include" })
         const data = await res.json()
-
-        setRol(data.user?.role || data.user?.role || null)
+        setRol(data.user?.role ?? null)
       } catch (error) {
-        console.error(error)
+        console.error("Error obteniendo rol de usuario:", error)
         setRol(null)
       }
     }
 
     fetchFechaAnaExtraccion()
     fetchUserRole()
+
+    // 🔁 refrescar automáticamente cada 60 segundos
+    const interval = setInterval(fetchFechaAnaExtraccion, 60000)
+
+    // limpiar al desmontar
+    return () => clearInterval(interval)
   }, [])
 
- 
-async function handleLogout() {
-  try {
-    
-    await fetch("/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    });
-  } catch (err) {
-    console.error("Error cerrando sesión en servidor:", err);
-  } finally {
-    localStorage.removeItem("user_name");
-    localStorage.setItem("logout-event", Date.now().toString());
-    window.location.href = "/";
+
+  async function handleLogout() {
+    try {
+
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Error cerrando sesión en servidor:", err);
+    } finally {
+      localStorage.removeItem("user_name");
+      localStorage.setItem("logout-event", Date.now().toString());
+      window.location.href = "/";
+    }
   }
-}
 
 
   return (
     <header className="border-b bg-card/50 backdrop-blur supports-backdrop-filter:bg-card/50">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          
+
           <div className="flex items-center gap-6">
-            
+
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-lg bg-slate-700 flex items-center justify-center shadow-md">
                 <span className="text-white font-bold text-sm tracking-tight">C</span>
@@ -96,7 +101,7 @@ async function handleLogout() {
             </nav>
           </div>
 
-          
+
           <div className="flex items-center gap-4">
             {fechaExtraccion ? (
               <span className="text-sm font-semibold text-white select-none">
@@ -108,7 +113,7 @@ async function handleLogout() {
               </span>
             )}
 
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -140,7 +145,7 @@ async function handleLogout() {
               <Bell className="h-4 w-4" />
             </Button>
 
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
