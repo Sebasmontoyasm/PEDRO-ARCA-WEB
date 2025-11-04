@@ -30,6 +30,8 @@ import CensoTable from "@/components/censo-table";
 import Footer from "@/components/footer";
 import { Ingreso } from "@/types/censo";
 
+export const dynamic = "force-dynamic";
+
 export default function DashboardPage() {
   const [dark] = useState(true);
 
@@ -52,6 +54,7 @@ export default function DashboardPage() {
       const res = await fetch("/api/dashboard/censo", {
         credentials: "include",
         cache: "no-store",
+        next: { revalidate: 0 }
       });
       const json = await res.json();
 

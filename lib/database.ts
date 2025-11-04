@@ -56,17 +56,6 @@ export async function getMetricGeneral() {
   }
 }
 
-export async function getMetricIA() {
-  try {
-    const SQL = `SELECT * FROM MetricIA;`
-    const [ia] = (await executeQuery(SQL)) as any[]
-    return ia || []
-  } catch (error) {
-    console.error("Error obteniendo métricas:", error)
-    return []
-  }
-}
-
 export async function getMetricCensoxMes() {
   try {
     const SQL = `CALL SP_ARCA_METRICS_CENSOXMES();`
