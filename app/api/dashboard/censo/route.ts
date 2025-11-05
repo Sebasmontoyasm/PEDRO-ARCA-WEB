@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getMetricCenso } from "@/lib/database";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 export async function GET() {
   try {
     const censo = await getMetricCenso();
@@ -27,3 +31,4 @@ export async function GET() {
     );
   }
 }
+
