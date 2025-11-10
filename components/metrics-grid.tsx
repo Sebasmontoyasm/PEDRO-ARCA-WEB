@@ -37,11 +37,12 @@ export default function MetricsGrid() {
 
   useEffect(() => {
     let isMounted = true;
-    const controller = new AbortController();
+    let controller = new AbortController();
 
-    async function fetchMetrics() {
+    const fetchMetrics = async () => {
       try {
         const res = await fetch("/api/dashboard/metrics", {
+          method: "GET",
           cache: "no-store",
           credentials: "include",
           headers: {
@@ -55,6 +56,7 @@ export default function MetricsGrid() {
         if (!res.ok) throw new Error("Error al obtener métricas");
         const dataMetrics = await res.json();
 
+        // === Procesamiento de datos ===
         const generalArray: Metric_General[] = dataMetrics.general || [];
         const general = generalArray.reduce<Record<string, number>>((acc, row) => {
           acc[row.NOMBRE.toUpperCase()] = row.TOTAL;
@@ -107,11 +109,16 @@ export default function MetricsGrid() {
 
         const censoxmes = dataMetrics.censoxmes || [];
         const monthNames = [
-          "Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic",
+          "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+          "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
         ];
         const barArray = censoxmes.map((row: { MES: string; TOTAL: number }) => {
           const [year, month] = row.MES.split("-");
-          return { name: `${monthNames[parseInt(month) - 1]} ${year}`, ingresos: row.TOTAL, year };
+          return {
+            name: `${monthNames[parseInt(month) - 1]} ${year}`,
+            ingresos: row.TOTAL,
+            year,
+          };
         });
 
         if (isMounted) {
@@ -136,18 +143,27 @@ export default function MetricsGrid() {
       } catch (error: any) {
         if (error.name !== "AbortError") console.error("Error obteniendo métricas:", error);
       }
-    }
+    };
 
+    // Primera carga inmediata
     fetchMetrics();
-    const interval = setInterval(fetchMetrics, 15000);
 
+    // Intervalo de refresco
+    const interval = setInterval(() => {
+      controller.abort(); // aborta fetch anterior
+      controller = new AbortController(); // nuevo controlador
+      fetchMetrics();
+    }, 15000);
+
+    // Limpieza al desmontar
     return () => {
       isMounted = false;
       controller.abort();
       clearInterval(interval);
     };
-  }, []); // ✅ solo se ejecuta una vez
+  }, [selectedYear]); // permite refrescar también si cambia el año
 
+  // === Datos filtrados por año ===
   const filteredBarData = barData.filter((d) => d.year === selectedYear);
 
   return (
@@ -158,11 +174,21 @@ export default function MetricsGrid() {
         return (
           <Card key={index} className="bg-slate-800 border-slate-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">{metric.title}</CardTitle>
-              <Icon className={`h-4 w-4 ${metric.color ?? (isPositive ? "text-green-400" : "text-red-400")}`} />
+              <CardTitle className="text-sm font-medium text-white">
+                {metric.title}
+              </CardTitle>
+              <Icon
+                className={`h-4 w-4 ${
+                  metric.color ?? (isPositive ? "text-green-400" : "text-red-400")
+                }`}
+              />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${metric.color ?? "text-white"}`}>{metric.value}</div>
+              <div
+                className={`text-2xl font-bold ${metric.color ?? "text-white"}`}
+              >
+                {metric.value}
+              </div>
               {metric.showProgress && (
                 <div className="mt-2">
                   <Progress
@@ -181,11 +207,15 @@ export default function MetricsGrid() {
         return (
           <Card key={index} className="bg-slate-800 border-slate-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">{doc.title}</CardTitle>
+              <CardTitle className="text-sm font-medium text-white">
+                {doc.title}
+              </CardTitle>
               <Icon className={`h-4 w-4 ${doc.color}`} />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${doc.color}`}>{doc.value}</div>
+              <div className={`text-2xl font-bold ${doc.color}`}>
+                {doc.value}
+              </div>
               {doc.showProgress && (
                 <div className="mt-2">
                   <Progress
@@ -199,16 +229,24 @@ export default function MetricsGrid() {
         );
       })}
 
-      {/* Charts */}
+      {/* === Charts === */}
       <div className="md:col-span-4 flex flex-col md:flex-row gap-6">
         <Card className="flex-1 bg-slate-800 border-slate-700">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-white">Distribución de Ingresos</CardTitle>
+            <CardTitle className="text-sm font-medium text-white">
+              Distribución de Ingresos
+            </CardTitle>
           </CardHeader>
           <CardContent className="h-64 flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={80} label>
+                <Pie
+                  data={pieData}
+                  dataKey="value"
+                  nameKey="name"
+                  outerRadius={80}
+                  label
+                >
                   {pieData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
@@ -221,14 +259,18 @@ export default function MetricsGrid() {
 
         <Card className="flex-1 bg-slate-800 border-slate-700">
           <CardHeader className="flex justify-between items-center">
-            <CardTitle className="text-sm font-medium text-white">Ingresos Mensuales</CardTitle>
+            <CardTitle className="text-sm font-medium text-white">
+              Ingresos Mensuales
+            </CardTitle>
             <select
               className="bg-slate-700 text-white text-sm p-1 rounded"
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
             >
               {[...new Set(barData.map((d) => d.year))].map((year) => (
-                <option key={year} value={year}>{year}</option>
+                <option key={year} value={year}>
+                  {year}
+                </option>
               ))}
             </select>
           </CardHeader>
