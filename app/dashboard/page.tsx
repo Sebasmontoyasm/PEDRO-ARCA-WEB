@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,6 @@ import {
   FilterIcon,
   SearchIcon,
   RotateCcwIcon,
-  DownloadIcon,
   FileTextIcon,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -43,19 +42,29 @@ export default function DashboardPage() {
   const [estadosUnicos, setEstadosUnicos] = useState<string[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isWindowActive = useRef(true);
+
   useEffect(() => {
     if (dark) document.documentElement.classList.add("dark");
     else document.documentElement.classList.remove("dark");
   }, [dark]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setIsRefreshing(true);
-      const res = await fetch("/api/dashboard/censo", {
+
+      const timestamp = new Date().getTime();
+
+      const res = await fetch(`/api/dashboard/censo?ts=${timestamp}`, {
         credentials: "include",
         cache: "no-store",
-        next: { revalidate: 0 }
+        next: { revalidate: 0 },
+        method: "GET",
       });
+
+      if (!res.ok) throw new Error("Error en la respuesta del servidor");
+
       const json = await res.json();
 
       const mapped: Ingreso[] = json.censo.map((item: any) => ({
@@ -83,13 +92,36 @@ export default function DashboardPage() {
     } finally {
       setIsRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchData(); // primera carga
-    const interval = setInterval(fetchData, 60000); // cada 60 segundos
-    return () => clearInterval(interval);
-  }, []);
+    const startInterval = () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      intervalRef.current = setInterval(() => {
+        if (isWindowActive.current) fetchData();
+      }, 60000);
+    };
+
+    const handleVisibilityChange = () => {
+      isWindowActive.current = !document.hidden;
+      if (isWindowActive.current) {
+        fetchData(); 
+        startInterval();
+      } else if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+
+    fetchData();
+    startInterval();
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [fetchData]);
 
   const handleResetFiltros = () => {
     setFiltroEstado("todos");
@@ -103,7 +135,7 @@ export default function DashboardPage() {
       <DashboardHeader />
 
       <main className="container mx-auto px-6 py-8 space-y-8">
-        {/* ENCABEZADO */}
+
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <FileTextIcon className="h-8 w-8 text-yellow-500" />
@@ -116,7 +148,9 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             {isRefreshing && (
-              <p className="text-sm text-slate-400 animate-pulse">Actualizando...</p>
+              <p className="text-sm text-yellow-400 animate-pulse font-medium">
+                🔄 Actualizando datos...
+              </p>
             )}
             <Button
               onClick={fetchData}
@@ -130,10 +164,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* MÉTRICAS */}
         <MetricsGrid />
 
-        {/* FILTROS */}
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <h2 className="flex items-center gap-2 text-white text-lg font-semibold">
@@ -153,7 +185,7 @@ export default function DashboardPage() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* BÚSQUEDA GENERAL */}
+
             <div>
               <label className="text-sm font-medium text-white">Búsqueda General</label>
               <div className="relative mt-1">
@@ -167,7 +199,6 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* ESTADO */}
             <div>
               <label className="text-sm font-medium text-white">Estado del ingreso</label>
               <Select value={filtroEstado} onValueChange={setFiltroEstado}>
@@ -191,7 +222,6 @@ export default function DashboardPage() {
               </Select>
             </div>
 
-            {/* RANGO INGRESO */}
             <div>
               <label className="text-sm font-medium text-white">Rango de ingreso</label>
               <Popover>
@@ -230,7 +260,6 @@ export default function DashboardPage() {
               </Popover>
             </div>
 
-            {/* RANGO PROCESADO */}
             <div>
               <label className="text-sm font-medium text-white">Rango de procesado</label>
               <Popover>
@@ -271,7 +300,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* TABLA */}
         <CensoTable
           data={data}
           filtroEstado={filtroEstado}

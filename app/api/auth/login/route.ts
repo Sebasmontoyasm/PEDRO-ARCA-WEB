@@ -1,4 +1,3 @@
-// route /login
 import { NextResponse } from "next/server";
 import { executeQuery } from "@/lib/database";
 import bcrypt from "bcryptjs";
@@ -38,7 +37,7 @@ export async function POST(req: Request) {
 
     res.cookies.set("token", token, {
       httpOnly: true,
-      secure: false, // ⚠ importante para HTTP externo
+      secure: false, 
       sameSite: "lax",
       path: "/",
       maxAge: 2 * 60 * 60,
