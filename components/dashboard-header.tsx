@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Bell, Settings, ChevronDown, Calendar, LogOut, Users } from "lucide-react"
 
+export const dynamic = "force-dynamic";
+
 export function DashboardHeader() {
   const [dark, setDark] = useState(false)
   const [fechaExtraccion, setFecha] = useState<string | null>(null)
@@ -29,7 +31,13 @@ export function DashboardHeader() {
   useEffect(() => {
     async function fetchFechaAnaExtraccion() {
       try {
-        const res = await fetch("/api/rpa/extraccion", { credentials: "include", cache: "no-store" })
+        const res = await fetch("/api/rpa/extraccion", {
+          credentials: "include",
+          cache: "no-store",
+          next: { revalidate: 0 },
+          method: "GET",
+         });
+         
         const data = await res.json()
         setFecha(data.timeAnaExtraccion.fechainsert)
       } catch (error) {
@@ -52,17 +60,13 @@ export function DashboardHeader() {
     fetchFechaAnaExtraccion()
     fetchUserRole()
 
-    // 🔁 refrescar automáticamente cada 60 segundos
     const interval = setInterval(fetchFechaAnaExtraccion, 60000)
 
-    // limpiar al desmontar
     return () => clearInterval(interval)
   }, [])
 
-
   async function handleLogout() {
     try {
-
       await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
@@ -75,7 +79,6 @@ export function DashboardHeader() {
       window.location.href = "/";
     }
   }
-
 
   return (
     <header className="border-b bg-card/50 backdrop-blur supports-backdrop-filter:bg-card/50">
@@ -112,7 +115,6 @@ export function DashboardHeader() {
                 Cargando fecha...
               </span>
             )}
-
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

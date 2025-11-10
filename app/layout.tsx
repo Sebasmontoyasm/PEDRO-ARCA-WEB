@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: 'Dashboard clÍnica de fracturas',
   generator: 'Solutions-Systems',
   icons: {
-    icon: "favicon/bone.svg", 
+    icon: "favicon/favicon.png", 
   },
 }
 

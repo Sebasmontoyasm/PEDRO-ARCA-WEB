@@ -107,7 +107,7 @@ export default function MetricsGrid() {
 
         const censoxmes = dataMetrics.censoxmes || [];
         const monthNames = [
-          "Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic",
+          "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
         ];
         const barArray = censoxmes.map((row: { MES: string; TOTAL: number }) => {
           const [year, month] = row.MES.split("-");
@@ -146,12 +146,13 @@ export default function MetricsGrid() {
       controller.abort();
       clearInterval(interval);
     };
-  }, []); // ✅ solo se ejecuta una vez
+  }, []);
 
   const filteredBarData = barData.filter((d) => d.year === selectedYear);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* === MÉTRICAS PRINCIPALES === */}
       {generalMetric.map((metric, index) => {
         const Icon = metric.icon;
         const isPositive = metric.trend === "up";
@@ -176,6 +177,7 @@ export default function MetricsGrid() {
         );
       })}
 
+      {/* === MÉTRICAS DE DOCUMENTOS === */}
       {docsGenerales.map((doc, index) => {
         const Icon = doc.icon;
         return (
@@ -199,26 +201,31 @@ export default function MetricsGrid() {
         );
       })}
 
-      {/* Charts */}
+      {/* === GRÁFICOS === */}
       <div className="md:col-span-4 flex flex-col md:flex-row gap-6">
+        {/* === PIE === */}
         <Card className="flex-1 bg-slate-800 border-slate-700">
           <CardHeader>
             <CardTitle className="text-sm font-medium text-white">Distribución de Ingresos</CardTitle>
           </CardHeader>
-          <CardContent className="h-64 flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={80} label>
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+          <CardContent>
+            <div className="w-full">
+              <ResponsiveContainer width="100%" aspect={2}>
+                <PieChart>
+                  <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={80} label>
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Legend />
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
+        {/* === BAR === */}
         <Card className="flex-1 bg-slate-800 border-slate-700">
           <CardHeader className="flex justify-between items-center">
             <CardTitle className="text-sm font-medium text-white">Ingresos Mensuales</CardTitle>
@@ -228,21 +235,25 @@ export default function MetricsGrid() {
               onChange={(e) => setSelectedYear(e.target.value)}
             >
               {[...new Set(barData.map((d) => d.year))].map((year) => (
-                <option key={year} value={year}>{year}</option>
+                <option key={year} value={year}>
+                  {year}
+                </option>
               ))}
             </select>
           </CardHeader>
-          <CardContent className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={filteredBarData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis dataKey="name" stroke="#cbd5e1" />
-                <YAxis stroke="#cbd5e1" />
-                <Tooltip formatter={(value: number) => [`${value}`, "Ingresos"]} />
-                <Legend />
-                <Bar dataKey="ingresos" fill="#6366f1" />
-              </BarChart>
-            </ResponsiveContainer>
+          <CardContent>
+            <div className="w-full">
+              <ResponsiveContainer width="100%" aspect={2}>
+                <BarChart data={filteredBarData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="name" stroke="#cbd5e1" />
+                  <YAxis stroke="#cbd5e1" />
+                  <Tooltip formatter={(value: number) => [`${value}`, "Ingresos"]} />
+                  <Legend />
+                  <Bar dataKey="ingresos" fill="#6366f1" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>
