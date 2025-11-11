@@ -19,6 +19,7 @@ export function DashboardHeader() {
   const [dark, setDark] = useState(false)
   const [fechaExtraccion, setFecha] = useState<string | null>(null)
   const [role, setRol] = useState<number | null>(null)
+  const [loadingFecha, setLoadingFecha] = useState<boolean>(true)
 
   useEffect(() => {
     if (dark) {
@@ -31,18 +32,24 @@ export function DashboardHeader() {
   useEffect(() => {
     async function fetchFechaAnaExtraccion() {
       try {
+        setLoadingFecha(true)
         const res = await fetch("/api/rpa/extraccion", {
           credentials: "include",
           cache: "no-store",
-          next: { revalidate: 0 },
-          method: "GET",
-         });
-         
+          headers: { "Cache-Control": "no-cache" },
+        })
+
+        if (!res.ok) throw new Error(`Error HTTP ${res.status}`)
         const data = await res.json()
-        setFecha(data.timeAnaExtraccion.fechainsert)
+
+        // Ajusta según la estructura real del JSON devuelto por la API
+        const fecha = data?.timeAnaExtraccion?.fechainsert ?? data?.fechainsert ?? null
+        setFecha(fecha)
       } catch (error) {
-        console.error("Error obteniendo fecha de extracción:", error)
+        console.error("❌ Error obteniendo fecha de extracción:", error)
         setFecha(null)
+      } finally {
+        setLoadingFecha(false)
       }
     }
 
@@ -52,7 +59,7 @@ export function DashboardHeader() {
         const data = await res.json()
         setRol(data.user?.role ?? null)
       } catch (error) {
-        console.error("Error obteniendo rol de usuario:", error)
+        console.error("❌ Error obteniendo rol de usuario:", error)
         setRol(null)
       }
     }
@@ -60,8 +67,8 @@ export function DashboardHeader() {
     fetchFechaAnaExtraccion()
     fetchUserRole()
 
+    // Refresca la fecha cada 60 segundos
     const interval = setInterval(fetchFechaAnaExtraccion, 60000)
-
     return () => clearInterval(interval)
   }, [])
 
@@ -84,9 +91,7 @@ export function DashboardHeader() {
     <header className="border-b bg-card/50 backdrop-blur supports-backdrop-filter:bg-card/50">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-
           <div className="flex items-center gap-6">
-
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-lg bg-slate-700 flex items-center justify-center shadow-md">
                 <span className="text-white font-bold text-sm tracking-tight">C</span>
@@ -104,15 +109,18 @@ export function DashboardHeader() {
             </nav>
           </div>
 
-
           <div className="flex items-center gap-4">
-            {fechaExtraccion ? (
+            {loadingFecha ? (
+              <span className="text-sm text-muted-foreground select-none animate-pulse">
+                Actualizando...
+              </span>
+            ) : fechaExtraccion ? (
               <span className="text-sm font-semibold text-white select-none">
                 Última actualización el {fechaExtraccion}
               </span>
             ) : (
-              <span className="text-sm text-muted-foreground select-none">
-                Cargando fecha...
+              <span className="text-sm text-destructive select-none">
+                Error al cargar fecha
               </span>
             )}
 
@@ -147,7 +155,6 @@ export function DashboardHeader() {
               <Bell className="h-4 w-4" />
             </Button>
 
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
@@ -166,6 +173,7 @@ export function DashboardHeader() {
                     </a>
                   </DropdownMenuItem>
                 )}
+
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="text-primary hover:text-primary"
